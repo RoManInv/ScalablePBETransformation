@@ -1,0 +1,8 @@
+**/*.py[co]
+**/dbConn.settings
+**/*.txt
+**/*.code-workspace
+**/*.rar
+!requirements.txt
+benchmark*/*
+table/*
