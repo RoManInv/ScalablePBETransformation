@@ -1,4 +1,5 @@
 from data.Answer import Answer
+from data.dbUtil import DBUtil
 from webtableindexer.Tokenizer import Tokenizer
 from transformer.transformer import DirectTransformer
 from data.graph import GENERATE
@@ -95,7 +96,53 @@ def testCSV(verbose):
     print(answer)
 
 
+def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
+    data = pd.read_csv(os.path.join(path, file))
+    examples = data.iloc[:numExample, :]
+    XList = examples.iloc[:, :-1].values.tolist()
+    Y = examples.iloc[:, -1].values.tolist()
+    XList_tokenize = list()
+    for xeach in XList:
+        templist = list()
+        for token in xeach:
+            templist.append(str(token).lower())
+        XList_tokenize.append(templist)
+    XList = XList_tokenize
+    Y = [str(item).lower() for item in Y]
+    exampleList = list()
+    for x, y in zip(XList, Y):
+        ans = Answer(x, y, isExample = True)
+        exampleList.append(ans)
+    if(len(data) < numExample + qnum):
+        exceedFlag = True
+    else:
+        exceedFlag = False
+    if(not exceedFlag):
+        Q = data.iloc[numExample:__QNUM__, :-1].values.tolist()
+    else:
+        Q = data.iloc[numExample:, :-1].values.tolist()
+    for i in range(len(Q)):
+        for j in range(len(Q[i])):
+            Q[i][j] = str(Q[i][j]).lower()
+    Q = [tuple(i) for i in Q]
+
+    return XList, Y, exampleList, Q
+
+def testDB():
+    __path__ = 'benchmark'
+    __mainfile__ = 'CountryToCapital.csv'
+
+    # XList, Y, exampleList, Q = getExampleAndQuery(__path__, __mainfile__)
+
+    dbUtil = DBUtil(dbConf = 'postgres')
+    XList = [['emil adolf von behring', '1901'], ['jean henri dunant', '1901']]
+    Y = ['medicine', 'peace']
+
+    print(dbUtil.getQueryString(XList, Y, 2))
+
+
+
 
 if(__name__ == '__main__'):
     args = parseArg()
-    testCSV(verbose = args['verbose'])
+    testDB()
