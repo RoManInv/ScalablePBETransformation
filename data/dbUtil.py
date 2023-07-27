@@ -97,11 +97,12 @@ class DBUtil(metaclass = SingletonMeta):
     
     def __YStringGen__(self, Y: Union[List, Tuple], tau: int) -> str:
         __qString__ = """
+                      SELECT colY.tableid FROM (
                       SELECT tableid, colid 
                       FROM main_tokenized mty
                       WHERE tokenized IN {}
                       GROUP BY (tableid, colid) 
-                      HAVING COUNT(DISTINCT tokenized) >= {} AS colY
+                      HAVING COUNT(DISTINCT tokenized) >= {}) AS colY
                       """
         
         if(len(Y) == 0):
@@ -143,7 +144,7 @@ class DBUtil(metaclass = SingletonMeta):
             colidList.append(__template_colid__.format(comb[0], comb[1]))
         
         whereClause = " AND ".join(tableidList)
-        whereClause += " AND\n"
+        whereClause += " AND \n"
         whereClause += " AND ".join(colidList)
 
         return whereClause
@@ -172,7 +173,7 @@ class DBUtil(metaclass = SingletonMeta):
         Xlist_t = [list(col) for col in zip(*XList)]
         numcols = len(Xlist_t)
 
-        __querystring__ = "SELECT colX1.tableid FROM\n"
+        __querystring__ = "SELECT colX1.tableid FROM \n"
         for i, col in enumerate(Xlist_t):
             if(i > 0):
                 __querystring__ += ',\n'
@@ -183,10 +184,10 @@ class DBUtil(metaclass = SingletonMeta):
         __wherestring__ = self.__whereClauseGen__(numcols)
 
         if(__wherestring__):
-            __querystring__ += '\nWHERE\n'
+            __querystring__ += '\n WHERE \n'
             __querystring__ += __wherestring__
         
-        __querystring__ += "\nUNION\n"
+        __querystring__ += "\n UNION \n"
 
         __Ystring__ = self.__YStringGen__(Y, 2)
 
@@ -251,37 +252,17 @@ class DBUtil(metaclass = SingletonMeta):
             XList (list): list of Xs
             Y (str): Y
             tau (float): threshold
-            conn (vertica_python.vertica.connection.Connection): default get new conn, else connection
+            conn (pg.Connection): default get new conn, else connection
         Return:
-            res (list): a set of tableid and colid
+            res (list): a set of tableid
         """
 
         if(not conn):
             conn = self.getDBConn()
-        queryString = self._queryStringGen(XList, Y)
-        ## Change!!
-        queryData = dict()
-        if(len(XList) == 1):
-            XList = str(XList[0])
-        else:
-            XList = tuple(XList)
-        if(len(Y) == 1):
-            Y = str(Y[0])
-        else:
-            Y = tuple(Y)
-            queryData['X'] = XList
-            queryData['tau'] = int(tau)
-            queryData['Y'] = Y
-
-            
-
-
-        
-        print(queryData)
-        print(queryString)
+        queryString = self.getQueryString(XList, Y, tau)
 
         cur = conn.cursor()
-        cur.execute(queryString, queryData)
+        cur.execute(queryString)
         res = cur.fetchall()
 
         if(cur):
@@ -415,6 +396,49 @@ class DBUtil(metaclass = SingletonMeta):
             self.closeDBConn(conn)
 
         return tableJSON
+    
+    def ressetToTableDict(self, res):
+        tableDict = dict()
+        for item in res:
+            if(item[0] not in tableDict.keys()):
+                tableDict[item[0]] = list()
+
+            while (int(item[2]) >= len(tableDict[item[0]])):
+                tableDict[item[0]].append([])
+            
+            col_data = tableDict[item[0]][int(item[2])]
+            while (int(item[1]) >= len(col_data)):
+                col_data.append(None)
+            col_data[int(item[1])] = item[3]
+
+            # if(int(item[1]) > len(tableDict[item[0]][int(item[2])])):
+            #     for i in range(int(item[1]) - len(tableDict[item[0]][int(item[2])]) + 1):
+            #         tableDict[item[0]][int(item[2])].append(None)
+            # tableDict[item[0]][int(item[2])][int(item[1])] = item[3]
+
+        return tableDict
+    
+    def reversedQuery_mt(self, tidList: List) -> List[Tuple]:
+        _qString_ = "SELECT tableid, colid, rowid, tokenized FROM main_tokenized WHERE tableid IN {}"
+
+        if(len(tidList) == 1):
+            qval = "(" + str(tidList[0]) + ")"
+        else:
+            qval = str(tuple(tidList))
+        _qString_ = _qString_.format(qval)
+
+        conn = self.getDBConn(specify = 'postgres')
+        cur = conn.cursor()
+
+        cur.execute(_qString_)
+        res = list()
+        
+        for item in cur.fetchall():
+            res.append(item)
+
+        tableDict = self.ressetToTableDict(res)
+
+        return tableDict
 
     def testSQL(self):
         conn = self.getDBConn()

@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import argparse
 import time
+import pprint
 
 __BENCHMARK__ = 'benchmark'
 __EXAMPLENUM__ = 2
@@ -135,10 +136,24 @@ def testDB():
     # XList, Y, exampleList, Q = getExampleAndQuery(__path__, __mainfile__)
 
     dbUtil = DBUtil(dbConf = 'postgres')
-    XList = [['emil adolf von behring', '1901'], ['jean henri dunant', '1901']]
-    Y = ['medicine', 'peace']
+    # XList = [['emil adolf von behring', '1901'], ['jean henri dunant', '1901']]
+    # Y = ['medicine', 'peace']
+    XList = [['germany'], ['china']]
+    Y = ['berlin', 'beijing']
 
-    print(dbUtil.getQueryString(XList, Y, 2))
+    tableList = list()
+    res = dbUtil.queryWebTables(XList, Y, 2)
+    for item in res:
+        tableList.append(item[0])
+    
+    print(len(tableList))
+
+    tableDict = dbUtil.reversedQuery_mt(tableList)
+
+    for k in tableDict.keys():
+        pprint.pprint(tableDict[k])
+        break
+    # print(len(dbUtil.reversedQuery_mt(tableList)))
 
 
 

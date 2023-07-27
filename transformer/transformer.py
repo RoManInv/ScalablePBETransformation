@@ -143,62 +143,68 @@ class DirectTransformer:
         MAX_ITER = 10
         dbUtil = DBUtil()
 
-        reversedQS = dict()
-        tid = 1
-        for item in __filelist__:
-            file = pd.read_csv(os.path.join(__path__, item), dtype = str)
-            reversedQS[tid] = {'table': file, 'key': list()}
-            tid += 1
+        res = dbUtil.queryWebTables(XList, Y, 2)
+        for item in res:
+            tableList.append(item[0])
 
-
-
-        for x, y in zip(XList, Y):
-            # print(x, y)
-            xlist = [str(item).lower() for item in x]
-            ans = Answer(xlist, str(y).lower(), isExample = True)
-            answerList.append(ans)
-        # print(answerList)
-        if(verbose):
-            with open('groupcomb.txt', 'w') as f:
-                f.write('Start combination \n')
-            with open('groupdetail.txt', 'w') as f:
-                f.write('Each group \n')
-            with open('detail_validated.txt', 'w') as f:
-                f.write('detail_validated:\n')
-            with open('detail_validated_dedup.txt', 'w') as f:
-                f.write('Deduplicated detail_validated:\n')
-        graphList = list()
-        for answer in answerList:
-            try:
-                gentime = time.time()
-                g1 = GENERATE(answer.X, answer.Y, reversedQS, verbose = verbose)
-            except Exception as e:
-                print("Exception:")
-                traceback.print_exc()
-                g1 = None
-            if(g1):
-                print('\tTime for graph generation: ' + str(time.time() - gentime))
-                graphList.append((g1, (answer.X, answer.Y)))
         
-        graphDict = dict()
-        print('final graph')
-        for graphtuple in graphList:
-            # print(graphtuple[1])
-            key = list(graphtuple[1])
-            for i in range(len(key)):
-                if(type(key[i]) is list):
-                    key[i] = tuple(key[i])
-            key = tuple(key)
-            val = graphtuple[0]
-            if(key not in graphDict.keys()):
-                graphDict[key] = list()
-            if(type(graphtuple[0]) is list):
-                graphDict[key].extend(val)
-            else:
-                graphDict[key].append(val)                         
+
+        # reversedQS = dict()
+        # tid = 1
+        # for item in __filelist__:
+        #     file = pd.read_csv(os.path.join(__path__, item), dtype = str)
+        #     reversedQS[tid] = {'table': file, 'key': list()}
+        #     tid += 1
+
+
+
+        # for x, y in zip(XList, Y):
+        #     # print(x, y)
+        #     xlist = [str(item).lower() for item in x]
+        #     ans = Answer(xlist, str(y).lower(), isExample = True)
+        #     answerList.append(ans)
+        # # print(answerList)
+        # if(verbose):
+        #     with open('groupcomb.txt', 'w') as f:
+        #         f.write('Start combination \n')
+        #     with open('groupdetail.txt', 'w') as f:
+        #         f.write('Each group \n')
+        #     with open('detail_validated.txt', 'w') as f:
+        #         f.write('detail_validated:\n')
+        #     with open('detail_validated_dedup.txt', 'w') as f:
+        #         f.write('Deduplicated detail_validated:\n')
+        # graphList = list()
+        # for answer in answerList:
+        #     try:
+        #         gentime = time.time()
+        #         g1 = GENERATE(answer.X, answer.Y, reversedQS, verbose = verbose)
+        #     except Exception as e:
+        #         print("Exception:")
+        #         traceback.print_exc()
+        #         g1 = None
+        #     if(g1):
+        #         print('\tTime for graph generation: ' + str(time.time() - gentime))
+        #         graphList.append((g1, (answer.X, answer.Y)))
+        
+        # graphDict = dict()
+        # print('final graph')
+        # for graphtuple in graphList:
+        #     # print(graphtuple[1])
+        #     key = list(graphtuple[1])
+        #     for i in range(len(key)):
+        #         if(type(key[i]) is list):
+        #             key[i] = tuple(key[i])
+        #     key = tuple(key)
+        #     val = graphtuple[0]
+        #     if(key not in graphDict.keys()):
+        #         graphDict[key] = list()
+        #     if(type(graphtuple[0]) is list):
+        #         graphDict[key].extend(val)
+        #     else:
+        #         graphDict[key].append(val)                         
 
                         
-        return graphDict, reversedQS
+        # return graphDict, reversedQS
     
     def __get_row_from_table__(self, table, col, val):
         if((type(col) is int or type(col) is str) and type(val) is str):
