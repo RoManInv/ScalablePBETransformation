@@ -147,7 +147,45 @@ class DirectTransformer:
         for item in res:
             tableList.append(item[0])
 
+        reversedQS = dbUtil.reversedQuery_mt(tableList)
+        # for key, tableitem in reversedQS.items():
+        #     reversedQS[key] = pd.DataFrame(tableitem)
+
+        for x, y in zip(XList, Y):
+            # print(x, y)
+            xlist = [str(item).lower() for item in x]
+            ans = Answer(xlist, str(y).lower(), isExample = True)
+            answerList.append(ans)
+
+        graphList = list()
+        for answer in answerList:
+            try:
+                gentime = time.time()
+                g1 = GENERATE(answer.X, answer.Y, reversedQS, verbose = verbose)
+            except Exception as e:
+                print("Exception:")
+                traceback.print_exc()
+                g1 = None
+            if(g1):
+                print('\tTime for graph generation: ' + str(time.time() - gentime))
+                graphList.append((g1, (answer.X, answer.Y)))
         
+        graphDict = dict()
+        print('final graph')
+        for graphtuple in graphList:
+            # print(graphtuple[1])
+            key = list(graphtuple[1])
+            for i in range(len(key)):
+                if(type(key[i]) is list):
+                    key[i] = tuple(key[i])
+            key = tuple(key)
+            val = graphtuple[0]
+            if(key not in graphDict.keys()):
+                graphDict[key] = list()
+            if(type(graphtuple[0]) is list):
+                graphDict[key].extend(val)
+            else:
+                graphDict[key].append(val)
 
         # reversedQS = dict()
         # tid = 1
@@ -204,7 +242,7 @@ class DirectTransformer:
         #         graphDict[key].append(val)                         
 
                         
-        # return graphDict, reversedQS
+        return graphDict, reversedQS
     
     def __get_row_from_table__(self, table, col, val):
         if((type(col) is int or type(col) is str) and type(val) is str):

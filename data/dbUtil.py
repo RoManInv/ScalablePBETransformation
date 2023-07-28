@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 from itertools import combinations
+import pandas as pd
 
 import json
 import vertica_python
@@ -401,20 +402,26 @@ class DBUtil(metaclass = SingletonMeta):
         tableDict = dict()
         for item in res:
             if(item[0] not in tableDict.keys()):
-                tableDict[item[0]] = list()
+                tableDict[item[0]] = {'table': list(), 'key': list()}
 
-            while (int(item[2]) >= len(tableDict[item[0]])):
-                tableDict[item[0]].append([])
+            tableitem = tableDict[item[0]]['table']
+
+            while (int(item[2]) >= len(tableitem)):
+                tableitem.append([])
             
-            col_data = tableDict[item[0]][int(item[2])]
+            col_data = tableitem[int(item[2])]
             while (int(item[1]) >= len(col_data)):
                 col_data.append(None)
             col_data[int(item[1])] = item[3]
 
-            # if(int(item[1]) > len(tableDict[item[0]][int(item[2])])):
-            #     for i in range(int(item[1]) - len(tableDict[item[0]][int(item[2])]) + 1):
-            #         tableDict[item[0]][int(item[2])].append(None)
-            # tableDict[item[0]][int(item[2])][int(item[1])] = item[3]
+        for key, tableitem in tableDict.items():
+            tableDict[key]['table'] = pd.DataFrame(tableitem['table'])
+
+        for dictkey, dictitem in tableDict.items():
+            for i, col in enumerate(dictitem['table'].columns):
+                deduped = dictitem['table'].drop_duplicates([col])
+                if(len(dictitem['table'].index) == len(deduped.index)):
+                    dictitem['key'].append(i)
 
         return tableDict
     
@@ -439,6 +446,8 @@ class DBUtil(metaclass = SingletonMeta):
         tableDict = self.ressetToTableDict(res)
 
         return tableDict
+    
+    
 
     def testSQL(self):
         conn = self.getDBConn()

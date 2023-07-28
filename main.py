@@ -4,6 +4,7 @@ from webtableindexer.Tokenizer import Tokenizer
 from transformer.transformer import DirectTransformer
 from data.graph import GENERATE
 from utils.intersect import intersect_procedure
+from transformer.transformer import DirectTransformer
 
 import os
 import pandas as pd
@@ -133,27 +134,25 @@ def testDB():
     __path__ = 'benchmark'
     __mainfile__ = 'CountryToCapital.csv'
 
-    # XList, Y, exampleList, Q = getExampleAndQuery(__path__, __mainfile__)
+    XList, Y, exampleList, Q = getExampleAndQuery(__path__, __mainfile__)
+
+    transformer = DirectTransformer(exampleList)
 
     dbUtil = DBUtil(dbConf = 'postgres')
     # XList = [['emil adolf von behring', '1901'], ['jean henri dunant', '1901']]
     # Y = ['medicine', 'peace']
-    XList = [['germany'], ['china']]
-    Y = ['berlin', 'beijing']
 
-    tableList = list()
-    res = dbUtil.queryWebTables(XList, Y, 2)
-    for item in res:
-        tableList.append(item[0])
+    # tableList = list()
+    # res = dbUtil.queryWebTables(XList, Y, 2)
+    # for item in res:
+    #     tableList.append(item[0])
     
-    print(len(tableList))
+    # print(len(tableList))
 
-    tableDict = dbUtil.reversedQuery_mt(tableList)
+    # tableDict = dbUtil.reversedQuery_mt(tableList)
 
-    for k in tableDict.keys():
-        pprint.pprint(tableDict[k])
-        break
-    # print(len(dbUtil.reversedQuery_mt(tableList)))
+    graphs, reversedQS = transformer.transform_db(XList, Y, Q)
+
 
 
 
