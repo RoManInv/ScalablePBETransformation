@@ -14,6 +14,345 @@ from data.Table import Table
 from webtableindexer.Tokenizer import Tokenizer
 from data.DBConn import PostgresDBConn, VerticaDBConn
 
+class QueryGenerator():
+    def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
+        self.XList = XList
+        self.Y = Y
+        self.tau = tau
+
+class DXFQueryGenerator(QueryGenerator):
+    def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
+        super().__init__(XList, Y, tau)
+
+    def __colQueryStrGen__(self, qid: int) -> str:
+        __qString__ = """
+                      (SELECT tableid, colid 
+                       FROM main_tokenized mt{}
+                       WHERE tokenized IN {}
+                       GROUP BY (tableid, colid) 
+                       HAVING COUNT(DISTINCT tokenized) >= {}) AS colX{}
+                      """
+        
+        valList = self.XList
+        tau = self.tau
+        
+        if(len(valList) == 0):
+            valString = "()"
+        elif(len(valList) == 1):
+            if(type(valList) is tuple or type(valList) is list):
+                valString = "(" + str(valList[0]) + ")"
+            elif(type(valList) is str):
+                valString = "(" + str(valList) + ")"
+        else:
+            if(type(valList) is tuple or type(valList) is list):
+                valString = str(tuple(valList))
+
+        if(len(valList) < tau):
+            tauval = len(valList)
+        else:
+            tauval = tau
+
+        __qString__ = __qString__.format(qid, valString, tauval, qid)
+
+        return __qString__
+    
+    def __YStringGen__(self) -> str:
+        __qString__ = """
+                      SELECT colY.tableid FROM (
+                      SELECT tableid, colid 
+                      FROM main_tokenized mty
+                      WHERE tokenized IN {}
+                      GROUP BY (tableid, colid) 
+                      HAVING COUNT(DISTINCT tokenized) >= {}) AS colY
+                      """
+        Y = self.Y
+        tau = self.tau
+
+        if(len(Y) == 0):
+            valString = "()"
+        elif(len(Y) == 1):
+            if(type(Y) is tuple or type(Y) is list):
+                valString = "(" + str(Y[0]) + ")"
+            elif(type(Y) is str):
+                valString = "(" + str(Y) + ")"
+        else:
+            if(type(Y) is tuple or type(Y) is list):
+                valString = str(tuple(Y))
+
+        if(len(Y) < tau):
+            tauval = len(Y)
+        else:
+            tauval = tau
+
+        __qString__ = __qString__.format(valString, tauval)
+
+        return __qString__
+    
+    def __whereClauseGen__ (self, numcols: int) -> Union[str, None]:
+        __template_tableid__ = "colX1.tableid = colX{}.tableid"
+        __template_colid__ = "colX{}.colid <> colX{}.colid"
+        __template_colid_y__ = "colX{}.colid <> colY.colid"
+
+        # if(numcols == 1):
+        #     return None
+        
+        tableidList = list()
+        colidList = list()
+        for i in range(numcols):
+            if(i + 1 == 1):
+                continue
+            tableidList.append(__template_tableid__.format(str(i + 1)))
+        
+        colids = [i + 1 for i in range(numcols)]
+        for comb in list(combinations(colids, 2)):
+            colidList.append(__template_colid__.format(comb[0], comb[1]))
+
+        colyList = list()
+        for i in colids:
+            colyList.append(__template_colid_y__.format(str(i)))
+        
+        whereClause = " AND ".join(tableidList)
+        whereClause += " AND colX1.tableid = colY.tableid"
+        whereClause += " AND \n"
+        whereClause += " AND ".join(colidList)
+        whereClause += " AND ".join(colyList)
+
+        return whereClause
+
+
+    def __queryStringGen__(self) -> str:
+        """
+        Generating SQL query string.
+
+        SELECT colX1.tableid FROM
+	        (SELECT tableid, colid FROM main_tokenized mt WHERE tokenized IN ('emil adolf von behring') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX1,
+	        (SELECT tableid, colid FROM main_tokenized mt2 WHERE tokenized IN ('1901') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX2,
+            (SELECT tableid FROM main_tokenized mt3 WHERE tokenized IN ('medicine') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colY
+        WHERE 
+	        colX1.tableid = colX2.tableid AND colX1.tableid = colY.tableid
+	        colX1.colid <> colX2.colid AND colX1.colid <> colY.colid AND colX2.colid <> colY.colid
+        
+
+        Params:
+            XList (list of List): list of X
+            Y (list): list of Y
+        Return:
+            qString (str): final query string
+        """
+
+        XList = self.XList
+        Y = self.Y
+        tau = self.tau
+
+        Xlist_t = [list(col) for col in zip(*XList)]
+        numcols = len(Xlist_t)
+
+        __querystring__ = "SELECT colX1.tableid FROM \n"
+        for i, col in enumerate(Xlist_t):
+            if(i > 0):
+                __querystring__ += ',\n'
+            __colstring__ = self.__colQueryStrGen__(i + 1)
+            __querystring__ += '\t'
+            __querystring__ += __colstring__
+        __querystring__ += ',\n\t'
+        __Ystring__ = self.__YStringGen__()
+        __querystring__ += __Ystring__
+        
+        __wherestring__ = self.__whereClauseGen__(numcols)
+        # print(__wherestring__)
+
+        if(__wherestring__):
+            __querystring__ += '\n WHERE \n'
+            __querystring__ += __wherestring__
+        
+        # __querystring__ += "\n UNION \n"
+
+        
+
+        
+
+        return __querystring__
+
+
+    def getQueryString(self) -> str:
+        # XList = self.XList
+        # Y = self.Y
+        # tau = self.tau
+        querystring = self.__queryStringGen__()
+        querystring = querystring.replace("\n", "")
+        querystring = querystring.replace("\t", "")
+
+        return querystring
+    
+    def getQueryString_format(self) -> str:
+        # XList = self.XList
+        # Y = self.Y
+        # tau = self.tau
+        querystring = self.__queryStringGen__()
+        return querystring
+
+    
+class L1QueryGenerator(QueryGenerator):
+    def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
+        super().__init__(XList, Y, tau)
+
+    def __colQueryStrGen__(self, qid: int) -> str:
+        __qString__ = """
+                      (SELECT tableid, colid 
+                       FROM main_tokenized mt{}
+                       WHERE tokenized IN {}
+                       GROUP BY (tableid, colid) 
+                       HAVING COUNT(DISTINCT tokenized) >= {}) AS colX{}
+                      """
+        
+        valList = self.XList
+        tau = self.tau
+        
+        if(len(valList) == 0):
+            valString = "()"
+        elif(len(valList) == 1):
+            if(type(valList) is tuple or type(valList) is list):
+                valString = "(" + str(valList[0]) + ")"
+            elif(type(valList) is str):
+                valString = "(" + str(valList) + ")"
+        else:
+            if(type(valList) is tuple or type(valList) is list):
+                valString = str(tuple(valList))
+
+        if(len(valList) < tau):
+            tauval = len(valList)
+        else:
+            tauval = tau
+
+        __qString__ = __qString__.format(qid, valString, tauval, qid)
+
+        return __qString__
+    
+    def __YStringGen__(self) -> str:
+        __qString__ = """
+                      SELECT colY.tableid FROM (
+                      SELECT tableid, colid 
+                      FROM main_tokenized mty
+                      WHERE tokenized IN {}
+                      GROUP BY (tableid, colid) 
+                      HAVING COUNT(DISTINCT tokenized) >= {}) AS colY
+                      """
+        Y = self.Y
+        tau = self.tau
+
+        if(len(Y) == 0):
+            valString = "()"
+        elif(len(Y) == 1):
+            if(type(Y) is tuple or type(Y) is list):
+                valString = "(" + str(Y[0]) + ")"
+            elif(type(Y) is str):
+                valString = "(" + str(Y) + ")"
+        else:
+            if(type(Y) is tuple or type(Y) is list):
+                valString = str(tuple(Y))
+
+        if(len(Y) < tau):
+            tauval = len(Y)
+        else:
+            tauval = tau
+
+        __qString__ = __qString__.format(valString, tauval)
+
+        return __qString__
+    
+    def __whereClauseGen__ (self, numcols: int) -> Union[str, None]:
+        __template_tableid__ = "colX1.tableid = colX{}.tableid"
+        __template_colid__ = "colX{}.colid <> colX{}.colid"
+
+        if(numcols == 1):
+            return None
+        
+        tableidList = list()
+        colidList = list()
+        for i in range(numcols):
+            if(i + 1 == 1):
+                continue
+            tableidList.append(__template_tableid__.format(str(i + 1)))
+        
+        colids = [i + 1 for i in range(numcols)]
+        for comb in list(combinations(colids, 2)):
+            colidList.append(__template_colid__.format(comb[0], comb[1]))
+        
+        whereClause = " AND ".join(tableidList)
+        whereClause += " AND \n"
+        whereClause += " AND ".join(colidList)
+
+        return whereClause
+
+
+    def __queryStringGen__(self) -> str:
+        """
+        Generating SQL query string.
+
+        SELECT colX1.tableid FROM
+	        (SELECT tableid, colid FROM main_tokenized mt WHERE tokenized IN ('emil adolf von behring') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX1,
+	        (SELECT tableid, colid FROM main_tokenized mt2 WHERE tokenized IN ('1901') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX2
+        WHERE 
+	        colX1.tableid = colX2.tableid AND 
+	        colX1.colid <> colX2.colid
+        UNION 
+        SELECT tableid FROM main_tokenized mt3 WHERE tokenized IN ('medicine') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0
+
+        Params:
+            XList (list of List): list of X
+            Y (list): list of Y
+        Return:
+            qString (str): final query string
+        """
+
+        XList = self.XList
+        Y = self.Y
+        tau = self.tau
+
+        Xlist_t = [list(col) for col in zip(*XList)]
+        numcols = len(Xlist_t)
+
+        __querystring__ = "SELECT colX1.tableid FROM \n"
+        for i, col in enumerate(Xlist_t):
+            if(i > 0):
+                __querystring__ += ',\n'
+            __colstring__ = self.__colQueryStrGen__(i + 1)
+            __querystring__ += '\t'
+            __querystring__ += __colstring__
+        
+        __wherestring__ = self.__whereClauseGen__(numcols)
+
+        if(__wherestring__):
+            __querystring__ += '\n WHERE \n'
+            __querystring__ += __wherestring__
+        
+        __querystring__ += "\n UNION \n"
+
+        __Ystring__ = self.__YStringGen__()
+
+        __querystring__ += __Ystring__
+
+        return __querystring__
+
+
+    def getQueryString(self) -> str:
+        # XList = self.XList
+        # Y = self.Y
+        # tau = self.tau
+        querystring = self.__queryStringGen__()
+        querystring = querystring.replace("\n", "")
+        querystring = querystring.replace("\t", "")
+
+        return querystring
+    
+    def getQueryString_format(self) -> str:
+        # XList = self.XList
+        # Y = self.Y
+        # tau = self.tau
+        querystring = self.__queryStringGen__()
+        return querystring
+    
+
 class DBUtil(metaclass = SingletonMeta):
     def __init__(self, dbConf):
         self.dbConf = dbConf
@@ -66,145 +405,27 @@ class DBUtil(metaclass = SingletonMeta):
         jsonCleanString = re.sub(r'\,\"\"(\w+)', ',"","\\1', jsonCleanString)
         
         return jsonCleanString
+
+        
+    def getQueryString(self, XList, Y, tau, query = 'L1'):
+        if(query == 'L1'):
+            qg = L1QueryGenerator(XList, Y, tau)
+        elif(query == 'DXF'):
+            qg = DXFQueryGenerator(XList, Y, tau)
+        elif(isinstance(query, QueryGenerator)):
+            qg = query
+
+        return qg.getQueryString()
     
-    def __colQueryStrGen__(self, valList: Union[List, Tuple], tau: int, qid: int) -> str:
-        __qString__ = """
-                      (SELECT tableid, colid 
-                       FROM main_tokenized mt{}
-                       WHERE tokenized IN {}
-                       GROUP BY (tableid, colid) 
-                       HAVING COUNT(DISTINCT tokenized) >= {}) AS colX{}
-                      """
-        
-        if(len(valList) == 0):
-            valString = "()"
-        elif(len(valList) == 1):
-            if(type(valList) is tuple or type(valList) is list):
-                valString = "(" + str(valList[0]) + ")"
-            elif(type(valList) is str):
-                valString = "(" + str(valList) + ")"
-        else:
-            if(type(valList) is tuple or type(valList) is list):
-                valString = str(tuple(valList))
+    def getQueryString_format(self, XList, Y, tau, query = 'L1'):
+        if(query == 'L1'):
+            qg = L1QueryGenerator(XList, Y, tau)
+        elif(query == 'DXF'):
+            qg = DXFQueryGenerator(XList, Y, tau)
+        elif(isinstance(query, QueryGenerator)):
+            qg = query
 
-        if(len(valList) < tau):
-            tauval = len(valList)
-        else:
-            tauval = tau
-
-        __qString__ = __qString__.format(qid, valString, tauval, qid)
-
-        return __qString__
-    
-    def __YStringGen__(self, Y: Union[List, Tuple], tau: int) -> str:
-        __qString__ = """
-                      SELECT colY.tableid FROM (
-                      SELECT tableid, colid 
-                      FROM main_tokenized mty
-                      WHERE tokenized IN {}
-                      GROUP BY (tableid, colid) 
-                      HAVING COUNT(DISTINCT tokenized) >= {}) AS colY
-                      """
-        
-        if(len(Y) == 0):
-            valString = "()"
-        elif(len(Y) == 1):
-            if(type(Y) is tuple or type(Y) is list):
-                valString = "(" + str(Y[0]) + ")"
-            elif(type(Y) is str):
-                valString = "(" + str(Y) + ")"
-        else:
-            if(type(Y) is tuple or type(Y) is list):
-                valString = str(tuple(Y))
-
-        if(len(Y) < tau):
-            tauval = len(Y)
-        else:
-            tauval = tau
-
-        __qString__ = __qString__.format(valString, tauval)
-
-        return __qString__
-    
-    def __whereClauseGen__ (self, numcols: int) -> Union[str, None]:
-        __template_tableid__ = "colX1.tableid = colX{}.tableid"
-        __template_colid__ = "colX{}.colid <> colX{}.colid"
-
-        if(numcols == 1):
-            return None
-        
-        tableidList = list()
-        colidList = list()
-        for i in range(numcols):
-            if(i + 1 == 1):
-                continue
-            tableidList.append(__template_tableid__.format(str(i + 1)))
-        
-        colids = [i + 1 for i in range(numcols)]
-        for comb in list(combinations(colids, 2)):
-            colidList.append(__template_colid__.format(comb[0], comb[1]))
-        
-        whereClause = " AND ".join(tableidList)
-        whereClause += " AND \n"
-        whereClause += " AND ".join(colidList)
-
-        return whereClause
-
-
-    def __queryStringGen__(self, XList: List[List], Y: List, tau: int = 2) -> str:
-        """
-        Generating SQL query string.
-
-        SELECT colX1.tableid FROM
-	        (SELECT tableid, colid FROM main_tokenized mt WHERE tokenized IN ('emil adolf von behring') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX1,
-	        (SELECT tableid, colid FROM main_tokenized mt2 WHERE tokenized IN ('1901') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX2
-        WHERE 
-	        colX1.tableid = colX2.tableid AND 
-	        colX1.colid <> colX2.colid
-        UNION 
-        SELECT tableid FROM main_tokenized mt3 WHERE tokenized IN ('medicine') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0
-
-        Params:
-            XList (list of List): list of X
-            Y (list): list of Y
-        Return:
-            qString (str): final query string
-        """
-
-        Xlist_t = [list(col) for col in zip(*XList)]
-        numcols = len(Xlist_t)
-
-        __querystring__ = "SELECT colX1.tableid FROM \n"
-        for i, col in enumerate(Xlist_t):
-            if(i > 0):
-                __querystring__ += ',\n'
-            __colstring__ = self.__colQueryStrGen__(col, 2, i + 1)
-            __querystring__ += '\t'
-            __querystring__ += __colstring__
-        
-        __wherestring__ = self.__whereClauseGen__(numcols)
-
-        if(__wherestring__):
-            __querystring__ += '\n WHERE \n'
-            __querystring__ += __wherestring__
-        
-        __querystring__ += "\n UNION \n"
-
-        __Ystring__ = self.__YStringGen__(Y, 2)
-
-        __querystring__ += __Ystring__
-
-        return __querystring__
-
-
-    def getQueryString(self, XList: List[List], Y: List, tau: int = 2) -> str:
-        querystring = self.__queryStringGen__(XList, Y, tau)
-        querystring = querystring.replace("\n", "")
-        querystring = querystring.replace("\t", "")
-
-        return querystring
-        
-
+        return qg.getQueryString_format()
 
 
 
