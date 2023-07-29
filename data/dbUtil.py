@@ -45,7 +45,14 @@ class DXFQueryGenerator(QueryGenerator):
                 valString = "(" + str(valList) + ")"
         else:
             if(type(valList) is tuple or type(valList) is list):
-                valString = str(tuple(valList))
+                stringList = list()
+                # valString = str(tuple(valList))
+                for item in valList:
+                    if(type(item) is list or type(item) is tuple):
+                        stringList.append(item[0])
+                    else:
+                        stringList.append(item)
+        valString = tuple(stringList)
 
         if(len(valList) < tau):
             tauval = len(valList)
@@ -112,7 +119,10 @@ class DXFQueryGenerator(QueryGenerator):
             colyList.append(__template_colid_y__.format(str(i)))
         
         whereClause = " AND ".join(tableidList)
-        whereClause += " AND colX1.tableid = colY.tableid"
+        if(whereClause):
+            whereClause += " AND colX1.tableid = colY.tableid"
+        else:
+            whereClause += "colX1.tableid = colY.tableid"
         whereClause += " AND \n"
         whereClause += " AND ".join(colidList)
         whereClause += " AND ".join(colyList)
@@ -217,7 +227,14 @@ class L1QueryGenerator(QueryGenerator):
                 valString = "(" + str(valList) + ")"
         else:
             if(type(valList) is tuple or type(valList) is list):
-                valString = str(tuple(valList))
+                stringList = list()
+                # valString = str(tuple(valList))
+                for item in valList:
+                    if(type(item) is list or type(item) is tuple):
+                        stringList.append(item[0])
+                    else:
+                        stringList.append(item)
+        valString = tuple(stringList)
 
         if(len(valList) < tau):
             tauval = len(valList)
@@ -466,7 +483,7 @@ class DBUtil(metaclass = SingletonMeta):
     #     return qString
 
 
-    def queryWebTables(self, XList, Y, tau, conn = None):
+    def queryWebTables(self, XList, Y, tau, query = 'L1', conn = None):
 
         """
         Use generated query string to issue query in the DB.
@@ -481,7 +498,7 @@ class DBUtil(metaclass = SingletonMeta):
 
         if(not conn):
             conn = self.getDBConn()
-        queryString = self.getQueryString(XList, Y, tau)
+        queryString = self.getQueryString(XList, Y, tau, query)
 
         cur = conn.cursor()
         cur.execute(queryString)

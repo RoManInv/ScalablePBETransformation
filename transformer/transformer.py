@@ -143,9 +143,10 @@ class DirectTransformer:
         MAX_ITER = 10
         dbUtil = DBUtil()
 
-        res = dbUtil.queryWebTables(XList, Y, 2)
+        res = dbUtil.queryWebTables(XList, Y, 2, 'DXF')
         for item in res:
             tableList.append(item[0])
+        print(len(tableList))
 
         reversedQS = dbUtil.reversedQuery_mt(tableList)
         # for key, tableitem in reversedQS.items():
