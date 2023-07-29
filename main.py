@@ -139,7 +139,7 @@ def testDB():
     transformer = DirectTransformer(exampleList)
 
     dbUtil = DBUtil(dbConf = 'postgres')
-    print(dbUtil.getQueryString_format(XList, Y, 2, 'DXF'))
+    # print(dbUtil.getQueryString_format(XList, Y, 2, 'DXF'))
     # XList = [['emil adolf von behring', '1901'], ['jean henri dunant', '1901']]
     # Y = ['medicine', 'peace']
 
@@ -152,7 +152,7 @@ def testDB():
 
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
-    # graphs, reversedQS = transformer.transform_db(XList, Y, Q)
+    graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'DXF')
 
 
 

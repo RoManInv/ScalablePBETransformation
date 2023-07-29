@@ -65,8 +65,7 @@ class DXFQueryGenerator(QueryGenerator):
     
     def __YStringGen__(self) -> str:
         __qString__ = """
-                      SELECT colY.tableid FROM (
-                      SELECT tableid, colid 
+                     (SELECT tableid, colid 
                       FROM main_tokenized mty
                       WHERE tokenized IN {}
                       GROUP BY (tableid, colid) 
@@ -252,7 +251,7 @@ class L1QueryGenerator(QueryGenerator):
                       FROM main_tokenized mty
                       WHERE tokenized IN {}
                       GROUP BY (tableid, colid) 
-                      HAVING COUNT(DISTINCT tokenized) >= {}) AS colY
+                      HAVING COUNT(DISTINCT tokenized) >= {}
                       """
         Y = self.Y
         tau = self.tau

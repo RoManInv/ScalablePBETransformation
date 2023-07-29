@@ -129,7 +129,7 @@ class DirectTransformer:
                         
         return graphDict, reversedQS
     
-    def transform_db(self, XList, Y, Q, eLimit = 5, qsLimit = -1, verbose = False):
+    def transform_db(self, XList, Y, Q, query = 'L1', eLimit = 5, qsLimit = -1, verbose = False):
         __path__ = 'benchmarkcsv'
         __mainfile__ = 'main.csv'
         __filelist__ = ['costrec.csv', 'markuprec.csv']
@@ -143,7 +143,7 @@ class DirectTransformer:
         MAX_ITER = 10
         dbUtil = DBUtil()
 
-        res = dbUtil.queryWebTables(XList, Y, 2, 'DXF')
+        res = dbUtil.queryWebTables(XList, Y, 2, query)
         for item in res:
             tableList.append(item[0])
         print(len(tableList))
