@@ -743,8 +743,10 @@ def GENERATE(_input, _output, reversedQS, verbose = False):
     if(type(_input) is list or type(_input) is tuple):
         eta_s = list()
         for item in _input:
-            eta_s_temp = prog.Makenode(str(item), [])
-            eta_s.extend(eta_s_temp)
+            # eta_s_temp = prog.Makenode(str(item), [])
+            # eta_s.extend(eta_s_temp)
+            eta_s.append(str(item))
+        print(eta_s)
     # eta_s = prog.Makenode(str(_input), [])
     eta_t = prog.Makenode(str(_output), [])
     eta = [eta_s, eta_t]
@@ -880,6 +882,82 @@ def GENERATE(_input, _output, reversedQS, verbose = False):
             data_structure = DAG(eta, eta_s, eta_t, xi, W, 0, 0)
             data_structures.append(data_structure)
     return data_structures
+
+def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
+    input_single = _input[0]
+    output_single = _output[0]
+
+    input_remaining = _input[1:]
+    output_remaining = _output[1:]
+
+    graphs = GENERATE(input_single, output_single, reversedQS, verbose)
+
+    graphsupport = dict()
+    for i, g in enumerate(graphs):
+        support = 1
+        graphsupport[str(i)] = {'graph': g, 'support': 1}
+        for x, y in zip(input_remaining, output_remaining):
+            ansdict = discover([x], reversedQS, g)
+            if(ansdict[x] == y):
+                support += 1
+        graphsupport[str(i)]['support'] = support
+
+    return graphsupport
+
+
+def discover(Q, reversedQS, graph):
+        ansDict = dict()
+        for q in Q:
+            transformation = ''
+            for Ws in graph.W:
+                FirstProg = True
+                currval = ''
+                for atom in Ws:
+                    if(atom.id == 'ConstStr'):
+                        currval = atom.get_value()
+                    elif(atom.id == 'SubStr'):
+                        if(FirstProg):
+                            atom.String = q
+                            currval = atom.get_value()
+                            FirstProg = False
+                        else:
+                            atom.String = currval
+                            currval = atom.get_value()
+                    elif(atom.id == 'Lookup'):
+                        if(FirstProg):
+                            atom.String = (q[atom.src[0]],)
+                            atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
+                            currval = atom.get_value()
+                            FirstProg = False
+                        else:
+                            atom.String = currval
+                            atom.String = list()
+                            for val in atom.src:
+                                if(val == -1):
+                                    atom.String.append(currval)
+                                else:
+                                    atom.String.append(q[val])
+                            atom.String = tuple(atom.String)
+                            atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
+                            currval = atom.get_value()
+                transformation += currval
+            if(q not in ansDict.keys()):
+                ansDict[q] = ''
+            ansDict[q] = transformation
+        return ansDict
+
+def __get_row_from_table__(table, col, val):
+        if((type(col) is int or type(col) is str) and type(val) is str):
+            reslist = table.loc[table[table.columns[col]] == val].values.tolist()
+        else:
+            reslist = table
+            for c, v in zip(col, val):
+                reslist = reslist.loc[reslist[reslist.columns[c]] == v]
+            reslist = reslist.values.tolist()
+        if(reslist):
+            return reslist[0]
+        else:
+            return None
 
 class DAG():
     def __init__(self, eta, eta_s, eta_t, xi, W, Table, idx):

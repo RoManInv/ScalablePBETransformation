@@ -131,6 +131,7 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     return XList, Y, exampleList, Q
 
 def testDB():
+    starttime = time.time()
     __path__ = 'benchmark'
     __mainfile__ = 'CountryToCapital.csv'
 
@@ -153,6 +154,16 @@ def testDB():
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
     graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'DXF')
+
+    print('Total time consumption: ' + str(time.time() - starttime))
+
+    with open('graphs.txt', 'w') as f:
+        for key, val in graphs.items():
+            f.write(str(key) + ':\n')
+            for item in val:
+                f.write(str(item))
+                f.write('\n')
+            f.write('==================\n')
 
 
 

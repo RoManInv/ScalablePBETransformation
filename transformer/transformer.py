@@ -9,7 +9,7 @@ from data.Answer import Answer
 from webtableindexer.Tokenizer import Tokenizer
 from data.dbUtil import DBUtil
 
-from data.graph import GENERATE
+from data.graph import GENERATE, GENERATE_scalable
 
 class DirectTransformer:
     def __init__(self, exampleList: List[Answer]) -> None:
@@ -159,34 +159,51 @@ class DirectTransformer:
             answerList.append(ans)
 
         graphList = list()
+        inputlist = list()
+        outputlist = list()
+        # for answer in answerList:
+        #     try:
+        #         gentime = time.time()
+        #         g1 = GENERATE(answer.X, answer.Y, reversedQS, verbose = verbose)
+        #     except Exception as e:
+        #         print("Exception:")
+        #         traceback.print_exc()
+        #         g1 = None
+        #     if(g1):
+        #         print('\tTime for graph generation: ' + str(time.time() - gentime))
+        #         graphList.append((g1, (answer.X, answer.Y)))
+
         for answer in answerList:
-            try:
-                gentime = time.time()
-                g1 = GENERATE(answer.X, answer.Y, reversedQS, verbose = verbose)
-            except Exception as e:
-                print("Exception:")
-                traceback.print_exc()
-                g1 = None
-            if(g1):
-                print('\tTime for graph generation: ' + str(time.time() - gentime))
-                graphList.append((g1, (answer.X, answer.Y)))
+            inputlist.append(answer.X)
+            outputlist.append(answer.Y)
+        try:
+            gentime = time.time()
+            graph = GENERATE_scalable(inputlist, outputlist, reversedQS, verbose = verbose)
+        except Exception as e:
+            print("Exception:")
+            traceback.print_exc()
+            graph = None
+        if(graph):
+            print('\tTime for graph generation: ' + str(time.time() - gentime))
+            graphList.append(graph)
         
-        graphDict = dict()
+        graphDict = graphList
         print('final graph')
-        for graphtuple in graphList:
-            # print(graphtuple[1])
-            key = list(graphtuple[1])
-            for i in range(len(key)):
-                if(type(key[i]) is list):
-                    key[i] = tuple(key[i])
-            key = tuple(key)
-            val = graphtuple[0]
-            if(key not in graphDict.keys()):
-                graphDict[key] = list()
-            if(type(graphtuple[0]) is list):
-                graphDict[key].extend(val)
-            else:
-                graphDict[key].append(val)
+
+        # for graphtuple in graphList:
+        #     # print(graphtuple[1])
+        #     key = list(graphtuple[1])
+        #     for i in range(len(key)):
+        #         if(type(key[i]) is list):
+        #             key[i] = tuple(key[i])
+        #     key = tuple(key)
+        #     val = graphtuple[0]
+        #     if(key not in graphDict.keys()):
+        #         graphDict[key] = list()
+        #     if(type(graphtuple[0]) is list):
+        #         graphDict[key].extend(val)
+        #     else:
+        #         graphDict[key].append(val)
 
         # reversedQS = dict()
         # tid = 1
