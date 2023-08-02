@@ -154,16 +154,25 @@ def testDB():
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
     graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'DXF')
+    # print(graphs[0])
+    graphs = graphs[0]
+    graphs = sorted(graphs, key = lambda x: x['support'], reverse = True)
 
     print('Total time consumption: ' + str(time.time() - starttime))
 
+    # with open('graphs.txt', 'w') as f:
+    #     for graph in graphs:
+    #         for key, val in graph.items():
+    #             f.write(str(key) + ':\n')
+    #             # for item in val.values():
+    #             f.write('Graph:\n')
+    #             f.write(str(val['graph']))
+    #             f.write('\n')
+    #             f.write('Support: ' + str(val['support']) + '\n')
+    #             # f.write('\n')
+    #             f.write('==================\n')
     with open('graphs.txt', 'w') as f:
-        for key, val in graphs.items():
-            f.write(str(key) + ':\n')
-            for item in val:
-                f.write(str(item))
-                f.write('\n')
-            f.write('==================\n')
+        f.write(str(graphs))
 
 
 

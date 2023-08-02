@@ -884,6 +884,10 @@ def GENERATE(_input, _output, reversedQS, verbose = False):
     return data_structures
 
 def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
+    """
+    return structure:
+    {int: {'graph': graph, 'support': int}}
+    """
     input_single = _input[0]
     output_single = _output[0]
 
@@ -892,15 +896,16 @@ def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
 
     graphs = GENERATE(input_single, output_single, reversedQS, verbose)
 
-    graphsupport = dict()
-    for i, g in enumerate(graphs):
+    graphsupport = list()
+    for g in graphs:
         support = 1
-        graphsupport[str(i)] = {'graph': g, 'support': 1}
+        tempdict = {'graph': g, 'support': 1}
         for x, y in zip(input_remaining, output_remaining):
             ansdict = discover([x], reversedQS, g)
-            if(ansdict[x] == y):
+            if(ansdict[tuple(x)] == y):
                 support += 1
-        graphsupport[str(i)]['support'] = support
+        tempdict['support'] = support
+        graphsupport.append(tempdict)
 
     return graphsupport
 
@@ -941,9 +946,9 @@ def discover(Q, reversedQS, graph):
                             atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
                             currval = atom.get_value()
                 transformation += currval
-            if(q not in ansDict.keys()):
-                ansDict[q] = ''
-            ansDict[q] = transformation
+            if(tuple(q) not in ansDict.keys()):
+                ansDict[tuple(q)] = ''
+            ansDict[tuple(q)] = transformation
         return ansDict
 
 def __get_row_from_table__(table, col, val):
