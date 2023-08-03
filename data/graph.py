@@ -746,8 +746,161 @@ def GENERATE(_input, _output, reversedQS, verbose = False):
             # eta_s_temp = prog.Makenode(str(item), [])
             # eta_s.extend(eta_s_temp)
             eta_s.append(str(item))
+        for item in _input:
+            eta_s_temp = prog.Makenode(str(item), [])
+            # eta_s_temp = prog.Makenode_comb(str(item), [])
+            eta_s.extend(eta_s_temp)
         print(eta_s)
     # eta_s = prog.Makenode(str(_input), [])
+    eta_t = prog.Makenode(str(_output), [])
+    eta = [eta_s, eta_t]
+    try:
+        if(verbose):
+            print("making edge for " + str(_input) + " AND " + str(_output))
+        edges, atoms = Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS)
+        if(verbose):
+            with open('edges.txt', 'w') as f:
+                for edge, atom in zip(edges, atoms):
+                    f.write('edge: ' + str(edge) + '\n')
+                    f.write('atom: ' + str(atom) + '\n')
+                    f.write('==========\n')
+            print('Number edges: ' + str(len(edges)))
+            print('Number atoms: ' + str(len(atoms)))
+        edges, atoms = dedup_generate(edges, atoms, verbose)
+        edges, atoms = split_edges_atoms(edges, atoms)
+        print(len(atoms))
+        
+        for xis, ws in zip(edges, atoms):
+            for xi, w in zip(xis, ws):
+                if(xi[1] not in groupDict.keys()):
+                    groupDict[xi[1]] = dict()
+                if(xi[0] not in groupDict[xi[1]].keys()):
+                    groupDict[xi[1]][xi[0]] = list()
+                groupDict[xi[1]][xi[0]].append(w)
+        if(verbose):
+            with open('groupdict.txt', 'w') as f:
+                for key, val in groupDict.items():
+                    f.write(str(key) + '\n')
+                    for k, v in val.items():
+                        f.write(str(k) + ':' + str(v) + '\n')
+                    f.write('-----------------\n')
+                f.write('=====================\n')
+                f.write(str(groupDict))
+        xis_grouped, Ws_grouped = list(), list()
+        if(verbose):
+            with open('group_validate.txt', 'w') as f:
+                f.write('Group validation\n')
+            with open('detail.txt', 'w') as f:
+                f.write('Validating atom programs \n')
+        for j in groupDict.keys():
+            Ws_g = list()
+            xis_g = list()
+            for i, progs in groupDict[j].items():
+                Ws_g.append(progs)
+                xis_g.append([(i, j)] * len(progs))
+            if(verbose):
+                with open('groupdetail.txt', 'a') as f:
+                    f.write(str(xis_g) + '\n')
+                    f.write(str(Ws_g) + '\n')
+            xis_g, Ws_g = Make_all_combination(xis_g, Ws_g)
+            
+            
+            xis_g, Ws_g = validate_single(xis_g, list(Ws_g), [eta_t[j]], verbose)
+            xis_g, Ws_g = validate_atoms(xis_g, Ws_g, eta_s, [eta_t[j]], verbose)
+            xis_g, Ws_g = remove_unnecessary(xis_g, Ws_g, eta_t[j])
+            
+            if(verbose):
+                with open('groupcomb.txt', 'a') as f:
+                    for xi, w in zip(xis_g, Ws_g):
+                        f.write(str(xi) + ': ' + str(w) + '\n')
+            xis_g, Ws_g = lookupValidate(xis_g, Ws_g)
+            
+            
+            
+            
+            # here validate each program
+            if(xis_g and Ws_g):
+                xis_grouped.append(xis_g)
+                Ws_grouped.append(Ws_g)
+        # here create final progs
+        
+    except Exception as e:
+        print('combination not found')
+        traceback.print_exc()
+        xis = None
+        Ws = None
+    finally:
+        print("Combinations search complete")
+        pass
+
+    if(verbose):
+        with open('detail_validated.txt', 'a') as f:
+            for xi, W in zip(xis_grouped, Ws_grouped):
+                f.write(str(xi) + '\n')
+                f.write(str(W) + '\n')
+                f.write('===========\n')
+
+    xis_grouped = [tuple(i) for i in xis_grouped]
+    Ws_grouped = [tuple(i) for i in Ws_grouped]
+    xis, Ws = dedup_validated(xis_grouped, Ws_grouped)
+    xis, Ws = group_up(xis, Ws)
+    
+    if(verbose):
+        with open('detail_validated_dedup.txt', 'a') as f:
+            for xi, W in zip(xis, Ws):
+                f.write(str(xi) + '\n')
+                f.write(str(W) + '\n')
+                f.write('===========\n')
+    xis, Ws = remove_fewer_cover(xis, Ws)
+    
+    
+    
+    xis, Ws = Make_all_combination(xis, Ws)
+    # xis, Ws = dedup_validated(xis, Ws) #??
+    if(verbose):
+        with open('final_edges_and_atoms.txt', 'w') as f:
+            for xi, W in zip(xis, Ws):
+                f.write(str(xi) + '\n')
+                f.write(str(W) + '\n')
+                f.write('===========\n')
+    
+    
+    
+
+    if(xis is None and Ws is None):
+        if(verbose):
+            print('Combination not found from previous step')
+        return None
+    data_structures = list()
+    if(verbose):
+        with open('graph.txt', 'w') as f:
+            for xi, W in zip(xis, Ws):
+                f.write('edge: ' + str(xi) + '\n')
+                f.write('atom: ' + str(W) + '\n')
+                f.write('--------------\n')
+                print(xi, W)
+                data_structure = DAG(eta, eta_s, eta_t, xi, W, 0, 0)
+                data_structures.append(data_structure)
+    else:
+        for xi, W in zip(xis, Ws):
+            data_structure = DAG(eta, eta_s, eta_t, xi, W, 0, 0)
+            data_structures.append(data_structure)
+    return data_structures
+
+def GENERATE_minimal(_input, _output, reversedQS, remaining, verbose = False):
+    groupDict = dict()
+    remaininglist = set()
+    if(type(_input) is list or type(_input) is tuple):
+        eta_s = list()
+        for item in _input:
+            # eta_s_temp = prog.Makenode(str(item), [])
+            # eta_s.extend(eta_s_temp)
+            eta_s.append(str(item))
+        # print(eta_s)
+    # eta_s = prog.Makenode(str(_input), [])
+    for inputstr in remaining:
+        for item in inputstr:
+            remaininglist.add(str(item))
     eta_t = prog.Makenode(str(_output), [])
     eta = [eta_s, eta_t]
     try:
@@ -899,12 +1052,15 @@ def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
     graphsupport = list()
     for g in graphs:
         support = 1
-        tempdict = {'graph': g, 'support': 1}
+        tempdict = {'graph': g, 'support': 1, 'support_list': [g.eta_s]}
+        suplist = list()
         for x, y in zip(input_remaining, output_remaining):
             ansdict = discover([x], reversedQS, g)
             if(ansdict[tuple(x)] == y):
                 support += 1
+                suplist.append(x)
         tempdict['support'] = support
+        tempdict['support_list'] += suplist
         graphsupport.append(tempdict)
 
     return graphsupport

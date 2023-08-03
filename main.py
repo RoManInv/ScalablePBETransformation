@@ -1,8 +1,9 @@
+from data import program
 from data.Answer import Answer
 from data.dbUtil import DBUtil
 from webtableindexer.Tokenizer import Tokenizer
 from transformer.transformer import DirectTransformer
-from data.graph import GENERATE
+from data.graph import GENERATE, discover
 from utils.intersect import intersect_procedure
 from transformer.transformer import DirectTransformer
 
@@ -120,22 +121,37 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     else:
         exceedFlag = False
     if(not exceedFlag):
-        Q = data.iloc[numExample:__QNUM__, :-1].values.tolist()
+        Q = data.iloc[numExample:qnum, :-1].values.tolist()
+        QTruth = data.iloc[numExample:qnum, -1].values.tolist()
     else:
         Q = data.iloc[numExample:, :-1].values.tolist()
+        QTruth = data.iloc[numExample:, -1].values.tolist()
     for i in range(len(Q)):
+        QTruth[i] = str(QTruth[i]).lower()
         for j in range(len(Q[i])):
             Q[i][j] = str(Q[i][j]).lower()
     Q = [tuple(i) for i in Q]
+    QTruth_dict = dict()
+    for q, qt in zip(Q, QTruth):
+        QTruth_dict[q] = qt
 
-    return XList, Y, exampleList, Q
+    return XList, Y, exampleList, Q, QTruth_dict
 
 def testDB():
     starttime = time.time()
     __path__ = 'benchmark'
     __mainfile__ = 'CountryToCapital.csv'
 
-    XList, Y, exampleList, Q = getExampleAndQuery(__path__, __mainfile__)
+    XList, Y, exampleList, Q, QTruth = getExampleAndQuery(__path__, __mainfile__)
+    # Qlist_sep = list()
+    # for item in Q:
+    #     strlist = list()
+    #     for String in item:
+    #         strlist.extend(program.Makenode_comb(String, []))
+    #     Qlist_sep.append(strlist)
+    # Q = Qlist_sep
+    print(Q)
+    print(QTruth)
 
     transformer = DirectTransformer(exampleList)
 
@@ -158,7 +174,7 @@ def testDB():
     graphs = graphs[0]
     graphs = sorted(graphs, key = lambda x: x['support'], reverse = True)
 
-    print('Total time consumption: ' + str(time.time() - starttime))
+    
 
     # with open('graphs.txt', 'w') as f:
     #     for graph in graphs:
@@ -174,8 +190,39 @@ def testDB():
     with open('graphs.txt', 'w') as f:
         f.write(str(graphs))
 
+    disctime = time.time()
+
+    correct = 0
+    wrong = 0
+    covered = 0
+    total = len(Q)
+
+    remainingquery = [q for q in Q]
+
+    for graphdict in graphs:
+        g = graphdict['graph']
+        ansDict = discover(remainingquery, reversedQS, g)
+        print(ansDict)
+        for key, val in ansDict.items():
+            if(not val == ''):
+                if(QTruth[tuple(key)] == val):
+                    correct += 1
+                    if(key in remainingquery):
+                        remainingquery.remove(key)
+        
+        if(not remainingquery):
+            covered = total
+            break
+    if(remainingquery):
+        covered = total - len(remainingquery)
+
+    print("\tTime for transformation discovery: " + str(time.time() - disctime))
+    print(str(total) + " queries in total.")
+    print(str(covered) + " queries are covered.")
+    print(str(correct) + " queries are correct.")
 
 
+    print('Total time consumption: ' + str(time.time() - starttime))
 
 
 if(__name__ == '__main__'):

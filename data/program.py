@@ -4,6 +4,7 @@ from functools import total_ordering
 from typing import Any, Callable, List, Union
 from Levenshtein import distance
 import numpy as np
+from itertools import chain, combinations
 
 from utils.lcs import lcs
 import utils.tokens as tk
@@ -439,5 +440,21 @@ def Makenode(String, Nodes):
 		Nodes.append(node)
 		String = String[len(str(node)):]
 		return Makenode(String, Nodes)
-	
 
+def powerset(iterable):
+    "powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3)"
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(1, len(s) - 1))
+
+def Makenode_comb(String, Nodes):
+	nodes = Makenode(String, Nodes)
+	nodes = powerset(nodes)
+	# print(list(nodes))
+	strlist = set()
+	for item in nodes:
+		listednodes = [i for i in item if i != ' ' and type(i) is not int]
+		currstr = ' '.join(list(listednodes))
+		if(currstr not in strlist and currstr != ''):
+			strlist.add(currstr)
+	print(strlist)
+	return list(strlist)
