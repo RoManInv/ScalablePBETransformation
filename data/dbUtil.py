@@ -251,7 +251,7 @@ class L1QueryGenerator(QueryGenerator):
                       FROM main_tokenized mty
                       WHERE tokenized IN {}
                       GROUP BY (tableid, colid) 
-                      HAVING COUNT(DISTINCT tokenized) >= {}
+                      HAVING COUNT(DISTINCT tokenized) >= {}) AS colY
                       """
         Y = self.Y
         tau = self.tau
@@ -498,6 +498,7 @@ class DBUtil(metaclass = SingletonMeta):
         if(not conn):
             conn = self.getDBConn()
         queryString = self.getQueryString(XList, Y, tau, query)
+        print(queryString)
 
         cur = conn.cursor()
         cur.execute(queryString)

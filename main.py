@@ -140,7 +140,8 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
 def testDB():
     starttime = time.time()
     __path__ = 'benchmark'
-    __mainfile__ = 'CountryToCapital.csv'
+    # __mainfile__ = 'CountryToCapital.csv'
+    __mainfile__ = 'CountryToTwoLettersISOCode.csv'
 
     XList, Y, exampleList, Q, QTruth = getExampleAndQuery(__path__, __mainfile__)
     # Qlist_sep = list()
@@ -169,7 +170,7 @@ def testDB():
 
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
-    graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'DXF')
+    graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'L1')
     # print(graphs[0])
     graphs = graphs[0]
     graphs = sorted(graphs, key = lambda x: x['support'], reverse = True)
