@@ -137,7 +137,7 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
 
     return XList, Y, exampleList, Q, QTruth_dict
 
-def testDB(path, mainfile):
+def testDB(path, mainfile, verbose = False):
     starttime = time.time()
     __path__ = path
     # __mainfile__ = 'CountryToCapital.csv'
@@ -200,10 +200,16 @@ def testDB(path, mainfile):
 
     remainingquery = [q for q in Q]
 
+
+
     for graphdict in graphs:
         g = graphdict['graph']
         ansDict = discover(remainingquery, reversedQS, g)
-        print(ansDict)
+        # print(ansDict)
+        if(verbose):
+            with open('report.txt', 'a') as f:
+                f.write(str(ansDict))
+                f.write('\n')
         for key, val in ansDict.items():
             if(not val == ''):
                 if(QTruth[tuple(key)] == val):
@@ -216,38 +222,42 @@ def testDB(path, mainfile):
             break
     if(remainingquery):
         covered = total - len(remainingquery)
+    if(verbose):
+        with open('report.txt', 'a') as f:
+            f.write("\tTime for transformation discovery: " + str(time.time() - disctime) + '\n')
+            f.write(str(total) + " queries in total.\n")
+            f.write(str(covered) + " queries are covered.\n")
+            f.write(str(correct) + " queries are correct.\n")
 
-    print("\tTime for transformation discovery: " + str(time.time() - disctime))
-    print(str(total) + " queries in total.")
-    print(str(covered) + " queries are covered.")
-    print(str(correct) + " queries are correct.")
 
+            f.write('Total time consumption: ' + str(time.time() - starttime) + '\n')
 
-    print('Total time consumption: ' + str(time.time() - starttime))
-
-def testbatch_exp():
+def testbatch_exp(verbose = False):
     path = 'benchmarkForReport/experiment'
     
     for file in os.listdir(path):
         print('Testing ' + str(file))
         if(os.path.isfile(os.path.join(path, file))):
             try:
-                testDB(path, file)
+                testDB(path, file, verbose)
             except:
                 print('This file cannot be read')
 
-def testbatch_func():
+def testbatch_func(verbose = False):
     path = 'benchmarkForReport/functional'
     
     for file in os.listdir(path):
         print('Testing ' + str(file))
         if(os.path.isfile(os.path.join(path, file))):
             try:
-                testDB(path, file)
+                testDB(path, file, verbose)
             except:
                 print('This file cannot be read')
 
 if(__name__ == '__main__'):
     args = parseArg()
-    testbatch_exp()
-    testbatch_func()
+    with open('report.txt', 'w') as f:
+        f.write("Result for each dataset\n")
+        f.write("==========\n")
+    testbatch_exp(True)
+    testbatch_func(True)
