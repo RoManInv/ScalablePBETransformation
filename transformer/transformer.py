@@ -129,7 +129,7 @@ class DirectTransformer:
                         
         return graphDict, reversedQS
     
-    def transform_db(self, XList, Y, Q, query = 'L1', eLimit = 5, qsLimit = -1, verbose = False):
+    def transform_db(self, XList, Y, Q, query = 'DXF', eLimit = 5, qsLimit = -1, verbose = False):
         __path__ = 'benchmarkcsv'
         __mainfile__ = 'main.csv'
         __filelist__ = ['costrec.csv', 'markuprec.csv']
