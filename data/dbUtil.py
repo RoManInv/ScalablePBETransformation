@@ -498,7 +498,7 @@ class DBUtil(metaclass = SingletonMeta):
         if(not conn):
             conn = self.getDBConn()
         queryString = self.getQueryString(XList, Y, tau, query)
-        print(queryString)
+        # print(queryString)
 
         cur = conn.cursor()
         cur.execute(queryString)

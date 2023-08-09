@@ -137,11 +137,11 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
 
     return XList, Y, exampleList, Q, QTruth_dict
 
-def testDB():
+def testDB(path, mainfile):
     starttime = time.time()
-    __path__ = 'benchmark'
+    __path__ = path
     # __mainfile__ = 'CountryToCapital.csv'
-    __mainfile__ = 'CountryToTwoLettersISOCode.csv'
+    __mainfile__ = mainfile
 
     XList, Y, exampleList, Q, QTruth = getExampleAndQuery(__path__, __mainfile__)
     # Qlist_sep = list()
@@ -151,8 +151,8 @@ def testDB():
     #         strlist.extend(program.Makenode_comb(String, []))
     #     Qlist_sep.append(strlist)
     # Q = Qlist_sep
-    print(Q)
-    print(QTruth)
+    # print(Q)
+    # print(QTruth)
 
     transformer = DirectTransformer(exampleList)
 
@@ -225,7 +225,29 @@ def testDB():
 
     print('Total time consumption: ' + str(time.time() - starttime))
 
+def testbatch_exp():
+    path = 'benchmarkForReport/experiment'
+    
+    for file in os.listdir(path):
+        print('Testing ' + str(file))
+        if(os.path.isfile(os.path.join(path, file))):
+            try:
+                testDB(path, file)
+            except:
+                print('This file cannot be read')
+
+def testbatch_func():
+    path = 'benchmarkForReport/functional'
+    
+    for file in os.listdir(path):
+        print('Testing ' + str(file))
+        if(os.path.isfile(os.path.join(path, file))):
+            try:
+                testDB(path, file)
+            except:
+                print('This file cannot be read')
 
 if(__name__ == '__main__'):
     args = parseArg()
-    testDB()
+    testbatch_exp()
+    testbatch_func()
