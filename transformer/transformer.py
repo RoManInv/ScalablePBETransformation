@@ -185,7 +185,8 @@ class DirectTransformer:
             graph = None
         if(graph):
             print('\tTime for graph generation: ' + str(time.time() - gentime))
-            graphList.append(graph)
+            if(graph is not None):
+                graphList.append(graph)
         
         graphDict = graphList
         print('final graph')

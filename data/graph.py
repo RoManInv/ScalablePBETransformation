@@ -769,6 +769,9 @@ def GENERATE(_input, _output, reversedQS, verbose = False):
         edges, atoms = dedup_generate(edges, atoms, verbose)
         edges, atoms = split_edges_atoms(edges, atoms)
         print(len(atoms))
+        if(len(atoms) > 3000):
+            print("This file is temporarily skipped due to taking too long")
+            return None
         
         for xis, ws in zip(edges, atoms):
             for xi, w in zip(xis, ws):
@@ -1048,6 +1051,8 @@ def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
     output_remaining = _output[1:]
 
     graphs = GENERATE(input_single, output_single, reversedQS, verbose)
+    if(graphs is None):
+        return None
 
     graphsupport = list()
     for g in graphs:
