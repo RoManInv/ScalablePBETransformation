@@ -152,6 +152,9 @@ class DirectTransformer:
         # for key, tableitem in reversedQS.items():
         #     reversedQS[key] = pd.DataFrame(tableitem)
 
+        if(len(tableList) > 2000 or len(reversedQS) > 3500):
+            return None, None
+
         for x, y in zip(XList, Y):
             # print(x, y)
             xlist = [str(item).lower() for item in x]

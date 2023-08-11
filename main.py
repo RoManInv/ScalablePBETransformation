@@ -171,7 +171,7 @@ def testDB(path, mainfile, verbose = False):
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
     graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'DXF')
-    if(len(reversedQS) > 1500):
+    if(graphs is None and reversedQS is None):
         print("This file is temporarily skipped due to taking too long")
         with open('report.txt', 'a') as f:
             f.write("This file is temporarily skipped due to taking too long\n")
