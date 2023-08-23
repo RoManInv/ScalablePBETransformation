@@ -9,7 +9,7 @@ from data.Answer import Answer
 from webtableindexer.Tokenizer import Tokenizer
 from data.dbUtil import DBUtil
 
-from data.graph import GENERATE, GENERATE_scalable
+from data.graph import GENERATE, GENERATE_scalable, GENERATE_group
 
 class DirectTransformer:
     def __init__(self, exampleList: List[Answer]) -> None:
@@ -161,6 +161,16 @@ class DirectTransformer:
             ans = Answer(xlist, str(y).lower(), isExample = True)
             answerList.append(ans)
 
+        groupTableSet = list()
+        tset = set()
+        tableColMap = dict()
+        # print([xlist[0]], [Y[0]])
+        for item in dbUtil.queryWebTables([XList[0]], [Y[0]], 1, 'DXF'):
+            tset.add(item[0])
+            if(item[0] not in tableColMap.keys()):
+                tableColMap[item[0]] = item[1]
+        groupTableSet.append(tset)
+
         graphList = list()
         inputlist = list()
         outputlist = list()
@@ -181,7 +191,8 @@ class DirectTransformer:
             outputlist.append(answer.Y)
         try:
             gentime = time.time()
-            graph = GENERATE_scalable(inputlist, outputlist, reversedQS, verbose = verbose)
+            graph = GENERATE_scalable(inputlist, outputlist, reversedQS, groupTableSet, tableColMap, verbose = verbose)
+            # graph = GENERATE_group(inputlist, outputlist, reversedQS, verbose = verbose)
         except Exception as e:
             print("Exception:")
             traceback.print_exc()

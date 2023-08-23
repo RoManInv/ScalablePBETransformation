@@ -256,6 +256,69 @@ def Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS):
 
     return edges_for_each_eta_t, atoms_for_each_eta_t
 
+def Make_edge_atom_for_each_eta_t_group(_input, eta_s, eta_t, groupTableSet, tableColMap, reversedQS):
+    edges_for_each_eta_t = list()
+    atoms_for_each_eta_t = list()
+    last_idx = len(eta_s) - 1
+    orig_eta_s = [str(i) for i in eta_s]
+    lookupList_all = set()
+    eta_s_old = set([str(item) for item in eta_s])
+
+    for i, node_t in enumerate(eta_t):
+        numIter = 0
+        iCounter = 0
+        eta_s_old = set(orig_eta_s)
+        nest_edges, nest_atoms = list(), list()
+        counters = {"NumTok": 0, "AlphaTok": 0, "OtherTok": 0}
+        
+        iterFlag = True
+        eta_s = orig_eta_s
+        lookupList_all = set()
+        while iterFlag:
+            numIter += 1
+            if(numIter > MAX_ITER):
+                return edges_for_each_eta_t, atoms_for_each_eta_t
+            if(lookupList_all):
+                eta_s = lookupList_all
+            for j, node_s in enumerate(eta_s):
+                visited = set()
+                if(str(node_s) not in visited):
+                    visited.add(str(node_s))
+                if(not str(node_s) in eta_s_old):
+                    eta_s_old.add(node_s)
+                try:
+                    # atoms, counters, lookupList = atom_search(_input, node_s, node_t, counters, j, last_idx, reversedQS)
+                    atoms, counters, lookupList = atom_search_multirow_group(_input, node_s, node_t, counters, j, last_idx, groupTableSet, tableColMap, reversedQS, orig_eta_s)
+                    if(lookupList):
+                        for item in lookupList:
+                            if(str(item) not in eta_s_old and str(item) not in lookupList_all):
+                                lookupList_all.add(str(item))
+                    
+                except Exception as e:
+                    traceback.print_exc()
+                    atoms = -1
+                if atoms != -1:
+                    for k in range(0, len(atoms)):
+                        nest_edges.append((iCounter, i))
+                    nest_atoms.extend(atoms)
+                    atoms = None
+                    edges_for_each_eta_t.append(nest_edges)
+                    atoms_for_each_eta_t.append(nest_atoms)
+            if(lookupList_all):
+                for item in lookupList_all:
+                    if item not in eta_s_old:
+                        eta_s_old.add(item)
+                eta_s = lookupList_all
+                lookupList_all = set()
+            else:
+                lookupList_all = set()
+                iterFlag = False
+            iCounter += 1
+            
+            
+
+    return edges_for_each_eta_t, atoms_for_each_eta_t
+
 def atom_search(String, node_s, node_t, counters, s_num, last_idx, reversedQS, numiter = 0, specifyAtom = None):
     if(specifyAtom is None or specifyAtom == 0):
         Atomlist = ["SubStr", "ConstStr", "Lookup"]
@@ -410,6 +473,148 @@ def atom_search_multirow(String, node_s, node_t, counters, s_num, last_idx, reve
                                     src.append(-1)
                             func = prog.Lookup(coverList, tid, row.index(node_t), row, src)
                             Atoms.append(func)
+                            break
+                        else:
+                            for rowidx, cell in enumerate(row):
+                                if(cell != node_s and cell not in coverList and str(cell) not in remaining_eta_s and cell != String):
+                                    src = list()
+                                    for itemcover in coverList:
+                                        if(itemcover in remaining_eta_s):
+                                            src.append(remaining_eta_s.index(itemcover))
+                                        else:
+                                            src.append(-1)
+                                    func = prog.Lookup(coverList, tid, row.index(cell), row, src)
+                                    Atoms.append(func)
+                                    if(not str(func.get_value()) == node_t):
+                                        if(str(func.get_value()) not in lookupList and rowidx in tableitem['key']):
+                                            lookupList.add(str(func.get_value()))
+
+            for key, val in node_s_visited.items():
+                if(not val):
+                    lookupList.add(str(key))
+
+
+
+        else:
+            print("atom_search did not match with any constructor.")
+            return -1
+    return Atoms, counters, lookupList
+
+def atom_search_multirow_group(String, node_s, node_t, counters, s_num, last_idx, groupTableSet, tableColMap, reversedQS, remaining_eta_s, numiter = 0, specifyAtom = None):
+    node_s_visited = {i: False for i in [node_s] + list(remaining_eta_s)}
+    tableVisited = set()
+    if(specifyAtom is None or specifyAtom == 0):
+        Atomlist = ["SubStr", "ConstStr", "Lookup"]
+    elif(specifyAtom == 1):
+        Atomlist = ["Lookup"]
+    elif(specifyAtom == 2):
+        Atomlist = ["SubStr", "ConstStr"]
+    Atomlist = ["SubStr", "ConstStr", "Lookup"]
+    Atoms = list()
+    for atom in Atomlist:
+        if atom == "SubStr":
+            flag = False
+            if(node_s in remaining_eta_s):
+                src = [remaining_eta_s.index(node_s)]
+            else:
+                src = [-1]
+            try:
+                isdecimal = node_s.isdecimal()
+            except:
+                isdecimal = 0
+            try:
+                _isalpha = tk.isalpha(node_s)
+            except:
+                _isalpha = 0
+            if isdecimal:
+                func = prog.SubStr(node_s, "NumTok", counters["NumTok"], 0, src)
+                counters["NumTok"] += 1
+                if func.get_value() == node_t:
+                    Atoms.append(func)
+            if _isalpha:
+                func = prog.SubStr(node_s, "AlphaTok", counters["AlphaTok"], 0, src)
+                counters["AlphaTok"] += 1
+                if func.get_value() == node_t:
+                    Atoms.append(func)
+            if s_num == 0 and node_s == node_t:
+                func = prog.SubStr(node_s, "StartTok", 0, 0, src)
+                if func.get_value() == node_t:
+                    Atoms.append(func)
+            if s_num == last_idx and node_s == node_t:
+                func = prog.SubStr(node_s, "EndTok", 0, 0, src)
+                if func.get_value() == node_t:
+                    Atoms.append(func)
+        elif atom == "ConstStr":
+            func = prog.ConstStr(node_t, 0)
+            Atoms.append(func)
+        elif atom == "Lookup":
+            foundLookup = False
+            if(numiter > MAX_ITER):
+                return -1
+            lookupList = set()
+            for tid, tableitem in reversedQS.items():
+                if(tid in tableVisited):
+                    continue
+                else:
+                    tableVisited.add(tid)
+                table_max_row_cover = 1
+                tab = tableitem['table']
+                for rowitem in tableitem['table'].iterrows():
+                    row = rowitem[1].values.tolist()
+                    row = [str(i) for i in row]
+                    coverList = list()
+                    coverIdxList = list()
+                    if(node_s in row):
+                        table_curr_row_cover = 1
+                        node_s_visited[node_s] = True
+                        coverList.append(node_s)
+                        coverIdxList.append(row.index(node_s))
+                        for token in remaining_eta_s:
+                            if(str(token) != str(node_s) and str(token) in row):
+                                coverList.append(token)
+                                coverIdxList.append(row.index(node_s))
+                                node_s_visited[token] = True
+                                table_curr_row_cover += 1
+                                if(table_curr_row_cover > table_max_row_cover):
+                                    table_max_row_cover = table_curr_row_cover
+                        if(table_curr_row_cover < table_max_row_cover):
+                            continue
+                        if(not len(tab.iloc[:, coverIdxList].drop_duplicates()) == len(tab)):
+                            continue
+                        if(node_t in row):
+                            src = list()
+                            for itemcover in coverList:
+                                if(itemcover in remaining_eta_s):
+                                    src.append(remaining_eta_s.index(itemcover))
+                                else:
+                                    src.append(-1)
+                            func = prog.Lookup(coverList, tid, row.index(node_t), row, src)
+                            Atoms.append(func)
+                            for tableset in groupTableSet:
+                                if(tid in tableset):
+                                    for grouptid in tableset:
+                                        if(grouptid not in tableVisited and grouptid in reversedQS.keys()):
+                                            currGroupTable = reversedQS[grouptid]['table']
+                                            for currGroupCol in currGroupTable.columns:
+                                                foundRow = currGroupTable[currGroupTable[currGroupCol].str.contains(node_t, na = False)]
+                                                # foundRow = foundRow.fillna(-1)
+                                                if(not foundRow.empty):
+                                                    foundFlag = False
+                                                    foundRow = foundRow.values.tolist()
+                                                    for i, currFoundRow in enumerate(foundRow):
+                                                        if(node_s in currFoundRow):
+                                                            foundRow = foundRow[i]
+                                                            foundFlag = True
+                                                            break
+                                                    if(not foundFlag):
+                                                        foundRow = None
+                                                else:
+                                                    foundRow = None
+                                            if(foundRow):
+                                                # currGroupSrc = []
+                                                func = prog.Lookup(coverList, grouptid, foundRow.index(node_t), foundRow, src)
+                                                Atoms.append(func)
+                                                tableVisited.add(grouptid)
                             break
                         else:
                             for rowidx, cell in enumerate(row):
@@ -738,6 +943,158 @@ def group_up(xis, Ws):
 
     return xis_grouped, ws_grouped
 
+def GENERATE_group(_input, _output, reversedQS, groupTableSet, tableColMap, verbose = False):
+    groupDict = dict()
+    if(type(_input) is list or type(_input) is tuple):
+        eta_s = list()
+        for item in _input:
+            # eta_s_temp = prog.Makenode(str(item), [])
+            # eta_s.extend(eta_s_temp)
+            eta_s.append(str(item))
+        for item in _input:
+            eta_s_temp = prog.Makenode(str(item), [])
+            # eta_s_temp = prog.Makenode_comb(str(item), [])
+            eta_s.extend(eta_s_temp)
+        print(eta_s)
+    # eta_s = prog.Makenode(str(_input), [])
+    eta_t = prog.Makenode(str(_output), [])
+    eta = [eta_s, eta_t]
+    try:
+        if(verbose):
+            print("making edge for " + str(_input) + " AND " + str(_output))
+        edges, atoms = Make_edge_atom_for_each_eta_t_group(_input, eta_s, eta_t, groupTableSet, tableColMap, reversedQS)
+        if(verbose):
+            with open('edges.txt', 'w') as f:
+                for edge, atom in zip(edges, atoms):
+                    f.write('edge: ' + str(edge) + '\n')
+                    f.write('atom: ' + str(atom) + '\n')
+                    f.write('==========\n')
+            print('Number edges: ' + str(len(edges)))
+            print('Number atoms: ' + str(len(atoms)))
+        edges, atoms = dedup_generate(edges, atoms, verbose)
+        edges, atoms = split_edges_atoms(edges, atoms)
+        print(len(atoms))
+        if(len(atoms) > 3000):
+            print("This file is temporarily skipped due to taking too long")
+            return None
+        
+        for xis, ws in zip(edges, atoms):
+            for xi, w in zip(xis, ws):
+                if(xi[1] not in groupDict.keys()):
+                    groupDict[xi[1]] = dict()
+                if(xi[0] not in groupDict[xi[1]].keys()):
+                    groupDict[xi[1]][xi[0]] = list()
+                groupDict[xi[1]][xi[0]].append(w)
+        if(verbose):
+            with open('groupdict.txt', 'w') as f:
+                for key, val in groupDict.items():
+                    f.write(str(key) + '\n')
+                    for k, v in val.items():
+                        f.write(str(k) + ':' + str(v) + '\n')
+                    f.write('-----------------\n')
+                f.write('=====================\n')
+                f.write(str(groupDict))
+        xis_grouped, Ws_grouped = list(), list()
+        if(verbose):
+            with open('group_validate.txt', 'w') as f:
+                f.write('Group validation\n')
+            with open('detail.txt', 'w') as f:
+                f.write('Validating atom programs \n')
+        for j in groupDict.keys():
+            Ws_g = list()
+            xis_g = list()
+            for i, progs in groupDict[j].items():
+                Ws_g.append(progs)
+                xis_g.append([(i, j)] * len(progs))
+            if(verbose):
+                with open('groupdetail.txt', 'a') as f:
+                    f.write(str(xis_g) + '\n')
+                    f.write(str(Ws_g) + '\n')
+            xis_g, Ws_g = Make_all_combination(xis_g, Ws_g)
+            
+            
+            xis_g, Ws_g = validate_single(xis_g, list(Ws_g), [eta_t[j]], verbose)
+            xis_g, Ws_g = validate_atoms(xis_g, Ws_g, eta_s, [eta_t[j]], verbose)
+            xis_g, Ws_g = remove_unnecessary(xis_g, Ws_g, eta_t[j])
+            
+            if(verbose):
+                with open('groupcomb.txt', 'a') as f:
+                    for xi, w in zip(xis_g, Ws_g):
+                        f.write(str(xi) + ': ' + str(w) + '\n')
+            xis_g, Ws_g = lookupValidate(xis_g, Ws_g)
+            
+            
+            
+            
+            # here validate each program
+            if(xis_g and Ws_g):
+                xis_grouped.append(xis_g)
+                Ws_grouped.append(Ws_g)
+        # here create final progs
+        
+    except Exception as e:
+        print('combination not found')
+        traceback.print_exc()
+        xis = None
+        Ws = None
+    finally:
+        print("Combinations search complete")
+        pass
+
+    if(verbose):
+        with open('detail_validated.txt', 'a') as f:
+            for xi, W in zip(xis_grouped, Ws_grouped):
+                f.write(str(xi) + '\n')
+                f.write(str(W) + '\n')
+                f.write('===========\n')
+
+    xis_grouped = [tuple(i) for i in xis_grouped]
+    Ws_grouped = [tuple(i) for i in Ws_grouped]
+    xis, Ws = dedup_validated(xis_grouped, Ws_grouped)
+    xis, Ws = group_up(xis, Ws)
+    
+    if(verbose):
+        with open('detail_validated_dedup.txt', 'a') as f:
+            for xi, W in zip(xis, Ws):
+                f.write(str(xi) + '\n')
+                f.write(str(W) + '\n')
+                f.write('===========\n')
+    xis, Ws = remove_fewer_cover(xis, Ws)
+    
+    
+    
+    xis, Ws = Make_all_combination(xis, Ws)
+    # xis, Ws = dedup_validated(xis, Ws) #??
+    if(verbose):
+        with open('final_edges_and_atoms.txt', 'w') as f:
+            for xi, W in zip(xis, Ws):
+                f.write(str(xi) + '\n')
+                f.write(str(W) + '\n')
+                f.write('===========\n')
+    
+    
+    
+
+    if(xis is None and Ws is None):
+        if(verbose):
+            print('Combination not found from previous step')
+        return None
+    data_structures = list()
+    if(verbose):
+        with open('graph.txt', 'w') as f:
+            for xi, W in zip(xis, Ws):
+                f.write('edge: ' + str(xi) + '\n')
+                f.write('atom: ' + str(W) + '\n')
+                f.write('--------------\n')
+                print(xi, W)
+                data_structure = DAG(eta, eta_s, eta_t, xi, W, 0, 0)
+                data_structures.append(data_structure)
+    else:
+        for xi, W in zip(xis, Ws):
+            data_structure = DAG(eta, eta_s, eta_t, xi, W, 0, 0)
+            data_structures.append(data_structure)
+    return data_structures
+
 def GENERATE(_input, _output, reversedQS, verbose = False):
     groupDict = dict()
     if(type(_input) is list or type(_input) is tuple):
@@ -1039,7 +1396,7 @@ def GENERATE_minimal(_input, _output, reversedQS, remaining, verbose = False):
             data_structures.append(data_structure)
     return data_structures
 
-def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
+def GENERATE_scalable(_input, _output, reversedQS, groupTableSet, tableColMap, verbose = False):
     """
     return structure:
     {int: {'graph': graph, 'support': int}}
@@ -1050,7 +1407,7 @@ def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
     input_remaining = _input[1:]
     output_remaining = _output[1:]
 
-    graphs = GENERATE(input_single, output_single, reversedQS, verbose)
+    graphs = GENERATE_group(input_single, output_single, reversedQS, groupTableSet, tableColMap, verbose)
     if(graphs is None):
         return None
 

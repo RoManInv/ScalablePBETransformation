@@ -18,7 +18,10 @@ class QueryGenerator():
     def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
         self.XList = XList
         self.Y = Y
-        self.tau = tau
+        if(len(XList) < tau and len(Y) < tau):
+            self.tau = len(XList)
+        else:
+            self.tau = tau
 
 class DXFQueryGenerator(QueryGenerator):
     def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
@@ -40,9 +43,10 @@ class DXFQueryGenerator(QueryGenerator):
             valString = "()"
         elif(len(valList) == 1):
             if(type(valList) is tuple or type(valList) is list):
-                valString = "(" + str(valList[0]) + ")"
+                print(valList[qid][0])
+                valString = "('" + str(valList[qid][0]) + "')"
             elif(type(valList) is str):
-                valString = "(" + str(valList) + ")"
+                valString = "('" + str(valList) + "')"
         else:
             if(type(valList) is tuple or type(valList) is list):
                 stringList = list()
@@ -52,14 +56,14 @@ class DXFQueryGenerator(QueryGenerator):
                         stringList.append(item[0])
                     else:
                         stringList.append(item)
-        valString = tuple(stringList)
+                valString = tuple(stringList)
 
         if(len(valList) < tau):
             tauval = len(valList)
         else:
             tauval = tau
 
-        __qString__ = __qString__.format(qid, valString, tauval, qid)
+        __qString__ = __qString__.format(str(int(qid) + 1), valString, tauval, str(int(qid) + 1))
 
         return __qString__
     
@@ -78,9 +82,9 @@ class DXFQueryGenerator(QueryGenerator):
             valString = "()"
         elif(len(Y) == 1):
             if(type(Y) is tuple or type(Y) is list):
-                valString = "(" + str(Y[0]) + ")"
+                valString = "('" + str(Y[0]) + "')"
             elif(type(Y) is str):
-                valString = "(" + str(Y) + ")"
+                valString = "('" + str(Y) + "')"
         else:
             if(type(Y) is tuple or type(Y) is list):
                 valString = str(tuple(Y))
@@ -156,11 +160,11 @@ class DXFQueryGenerator(QueryGenerator):
         Xlist_t = [list(col) for col in zip(*XList)]
         numcols = len(Xlist_t)
 
-        __querystring__ = "SELECT colX1.tableid FROM \n"
+        __querystring__ = "SELECT colX1.tableid, colX1.colid FROM \n"
         for i, col in enumerate(Xlist_t):
             if(i > 0):
                 __querystring__ += ',\n'
-            __colstring__ = self.__colQueryStrGen__(i + 1)
+            __colstring__ = self.__colQueryStrGen__(i)
             __querystring__ += '\t'
             __querystring__ += __colstring__
         __querystring__ += ',\n\t'
@@ -328,7 +332,7 @@ class L1QueryGenerator(QueryGenerator):
         Xlist_t = [list(col) for col in zip(*XList)]
         numcols = len(Xlist_t)
 
-        __querystring__ = "SELECT colX1.tableid FROM \n"
+        __querystring__ = "SELECT colX1.tableid, colX1.colid FROM \n"
         for i, col in enumerate(Xlist_t):
             if(i > 0):
                 __querystring__ += ',\n'
@@ -497,10 +501,12 @@ class DBUtil(metaclass = SingletonMeta):
 
         if(not conn):
             conn = self.getDBConn()
+        print(XList, Y)
         queryString = self.getQueryString(XList, Y, tau, query)
         # print(queryString)
 
         cur = conn.cursor()
+        # print(queryString)
         cur.execute(queryString)
         res = cur.fetchall()
 

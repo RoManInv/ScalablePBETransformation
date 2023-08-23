@@ -14,6 +14,7 @@ import time
 import pprint
 
 __BENCHMARK__ = 'benchmark'
+__DS__ = 'CountryToCapital.csv'
 __EXAMPLENUM__ = 2
 __QNUM__ = __EXAMPLENUM__ + 3
 
@@ -261,8 +262,12 @@ def testbatch_func(verbose = False):
 
 if(__name__ == '__main__'):
     args = parseArg()
+    path = __BENCHMARK__
+    file = __DS__
+    
     with open('report.txt', 'w') as f:
         f.write("Result for each dataset\n")
         f.write("==========\n")
-    testbatch_exp(True)
-    testbatch_func(True)
+    testDB(path, file, True)
+    # testbatch_exp(True)
+    # testbatch_func(True)
