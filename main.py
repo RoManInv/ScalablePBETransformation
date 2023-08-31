@@ -1,6 +1,6 @@
 from data import program
 from data.Answer import Answer
-from data.dbUtil import DBUtil
+from data.dbUtil import DBUtil, DXFQueryGenerator, ReverseQueryGenerator
 from webtableindexer.Tokenizer import Tokenizer
 from transformer.transformer import DirectTransformer
 from data.graph import GENERATE, discover
@@ -260,14 +260,30 @@ def testbatch_func(verbose = False):
             except:
                 print('This file cannot be read')
 
+def testSQL(verbose = False):
+    dbUtil = DBUtil(dbConf = 'postgres')
+    XList = [['germany'], ['china']]
+    Y = ['berlin', 'beijing']
+    Q = [['france'], ['japan']]
+
+    qgen = DXFQueryGenerator(XList, Y)
+    # qString = dbUtil.queryWebTables(XList, Y, 2, 'DXF')
+    revQGen = ReverseQueryGenerator(XList, Y, 2, Q, qgen)
+    revQString = revQGen.getQueryString_format()
+    print(revQString)
+    conn = dbUtil.getDBConn(specify = 'postgres')
+    cur = conn.cursor()
+    cur.execute(revQString)
+    print(cur.fetchall())
+
 if(__name__ == '__main__'):
     args = parseArg()
-    path = __BENCHMARK__
-    file = __DS__
+    # path = __BENCHMARK__
+    # file = __DS__
     
-    with open('report.txt', 'w') as f:
-        f.write("Result for each dataset\n")
-        f.write("==========\n")
-    testDB(path, file, True)
-    # testbatch_exp(True)
-    # testbatch_func(True)
+    # with open('report.txt', 'w') as f:
+    #     f.write("Result for each dataset\n")
+    #     f.write("==========\n")
+    # testDB(path, file, True)
+
+    testSQL()

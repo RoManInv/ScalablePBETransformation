@@ -371,7 +371,192 @@ class L1QueryGenerator(QueryGenerator):
         # tau = self.tau
         querystring = self.__queryStringGen__()
         return querystring
+
+class ReverseQueryGenerator(QueryGenerator):
+    def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2, Q: List = [], queryGen: Union[QueryGenerator, str] = 'DXF') -> None:
+        super().__init__(XList, Y, tau)
+        self.Q = Q
+        if(isinstance(queryGen, QueryGenerator)):
+            self.queryGen = queryGen
+        else:
+            self.queryGen = DXFQueryGenerator(self.XList, self.Y, self.tau)
+        # elif(queryGen == 'DXF'):
+        #     self.queryGen = DXFQueryGenerator(self.XList, self.Y, self.tau)
+        # elif(queryGen == 'L1'):
+        #     self.queryGen = L1QueryGenerator(self.XList, self.Y, self.tau)
+
+    def __withClauseGen__(self) -> str:
+        __withStart__ = "WITH subq AS (\n"
+        queyrStr = self.queryGen.getQueryString()
+        return __withStart__ + queyrStr + ")\n"
     
+    def __colQueryStrGen__(self, qid: int) -> str:
+        __qString__ = """
+                      (SELECT tableid, colid, rowid 
+                       FROM main_tokenized mts{}
+                       WHERE tokenized IN {} AND tableid IN (SELECT tableid FROM subq)
+                       GROUP BY (tableid, colid, rowid)) AS subcolX{}
+                      """
+        
+        valList = self.Q
+        # tau = self.tau
+        
+        if(len(valList) == 0):
+            valString = "()"
+        elif(len(valList) == 1):
+            if(type(valList) is tuple or type(valList) is list):
+                print(valList[qid][0])
+                valString = "('" + str(valList[qid][0]) + "')"
+            elif(type(valList) is str):
+                valString = "('" + str(valList) + "')"
+        else:
+            if(type(valList) is tuple or type(valList) is list):
+                stringList = list()
+                # valString = str(tuple(valList))
+                for item in valList:
+                    if(type(item) is list or type(item) is tuple):
+                        stringList.append(item[0])
+                    else:
+                        stringList.append(item)
+                valString = tuple(stringList)
+
+        # if(len(valList) < tau):
+        #     tauval = len(valList)
+        # else:
+        #     tauval = tau
+        __qString__ = __qString__.format(str(int(qid) + 1), valString, str(int(qid) + 1))
+        # print(__qString__)
+        return __qString__
+
+    def __YStringGen__(self) -> str:
+        __qString__ = """
+                     (SELECT tableid, colid 
+                      FROM main_tokenized mty
+                      WHERE tokenized IN {}
+                      GROUP BY (tableid, colid)) AS subcolY
+                      """
+        Y = self.Y
+        tau = self.tau
+
+        if(len(Y) == 0):
+            valString = "()"
+        elif(len(Y) == 1):
+            if(type(Y) is tuple or type(Y) is list):
+                valString = "('" + str(Y[0]) + "')"
+            elif(type(Y) is str):
+                valString = "('" + str(Y) + "')"
+        else:
+            if(type(Y) is tuple or type(Y) is list):
+                valString = str(tuple(Y))
+
+        if(len(Y) < tau):
+            tauval = len(Y)
+        else:
+            tauval = tau
+
+        __qString__ = __qString__.format(valString, tauval)
+
+        return __qString__
+
+    def __whereClauseGen__ (self, numcols: int) -> Union[str, None]:
+            __template_tableid__ = "colX1.tableid = subcolX{}.tableid"
+            __template_colid__ = "colX{}.colid <> subcolX{}.colid"
+            # __template_colid_y__ = "colX{}.colid <> subcolY.colid"
+
+            # if(numcols == 1):
+            #     return None
+            
+            tableidList = list()
+            colidList = list()
+            for i in range(numcols):
+                if(i + 1 == 1):
+                    continue
+                tableidList.append(__template_tableid__.format(str(i + 1)))
+            
+            colids = [i + 1 for i in range(numcols)]
+            for comb in list(combinations(colids, 2)):
+                colidList.append(__template_colid__.format(comb[0], comb[1]))
+
+            # colyList = list()
+            # for i in colids:
+            #     colyList.append(__template_colid_y__.format(str(i)))
+            
+            if(tableidList):
+                whereClause = " AND ".join(tableidList)
+            else:
+                whereClause = None
+            # if(whereClause):
+            #     whereClause += " AND subcolX1.tableid = subcolY.tableid"
+            # else:
+            #     whereClause += "subcolX1.tableid = subcolY.tableid"
+            # whereClause += " AND \n"
+            # whereClause += " AND ".join(colidList)
+            # whereClause += " AND ".join(colyList)
+
+            return whereClause
+
+    def __queryStringGen__(self) -> str:
+        """
+        Generating SQL query string.
+
+        WITH subq AS (SELECT DISTINCT colX1.tableid AS tableid FROM
+            (SELECT tableid, colid FROM main_tokenized mt WHERE tokenized IN ('germany') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX1,
+            (SELECT tableid, colid FROM main_tokenized mt3 WHERE tokenized IN ('berlin') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colY
+        WHERE 
+            colX1.tableid = colY.tableid AND
+            colX1.colid <> colY.colid)
+        SELECT subcolX1.tableid, subcolX1.colid, subcolX1.rowid FROM
+            (SELECT tableid, colid, rowid FROM main_tokenized mts1 
+            WHERE tokenized IN ('china', 'france') AND tableid IN (SELECT tableid FROM subq)) subcolX1
+        ?WHERE subcolX1.tableid = subcolY.tableid AND subcolX1.colid = subcolY.colid AND subcolX1.rowid <> subcolY.rowid?
+        GROUP BY(sub1.tableid, sub1.colid, sub1.rowid)
+        
+
+        Params:
+            XList (list of List): list of X
+            Y (list): list of Y
+        Return:
+            qString (str): final query string
+        """
+
+        XList = self.Q
+        Y = self.Y
+        tau = self.tau
+
+        Xlist_t = [list(col) for col in zip(*XList)]
+        # print(Xlist_t)
+        numcols = len(Xlist_t)
+
+        __querystring__ = self.__withClauseGen__()
+        __querystring__ += "\nSELECT subcolX1.tableid, subcolX1.colid, subcolX1.rowid FROM\n"
+        for i, col in enumerate(Xlist_t):
+            # print(i, col)
+            if(i > 0):
+                # print(i)
+                __querystring__ += ',\n'
+            __colstring__ = self.__colQueryStrGen__(i)
+            # print(__colstring__)
+            __querystring__ += '\t'
+            __querystring__ += __colstring__
+        # __querystring__ += ',\n\t'
+        # __Ystring__ = self.__YStringGen__()
+        # __querystring__ += __Ystring__
+        
+        __wherestring__ = self.__whereClauseGen__(numcols)
+        # print(__wherestring__)
+
+        if(__wherestring__):
+            __querystring__ += '\n WHERE \n'
+            __querystring__ += __wherestring__
+        
+        return __querystring__
+    
+    def getQueryString(self) -> str:
+        qString = self.__queryStringGen__()
+        return qString.replace('\n', '').replace('\t', '')
+    
+    def getQueryString_format(self) -> str:
+        return self.__queryStringGen__()
 
 class DBUtil(metaclass = SingletonMeta):
     def __init__(self, dbConf):
