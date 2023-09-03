@@ -170,6 +170,11 @@ class DirectTransformer:
             if(item[0] not in tableColMap.keys()):
                 tableColMap[item[0]] = item[1]
         groupTableSet.append(tset)
+        additionalMap = dict()
+        for item in dbUtil.queryReversedMap(XList, Y, Q):
+            if(item[0] not in additionalMap.keys()):
+                additionalMap[item[0]] = list()
+            additionalMap[item[0]].append([item[1], item[2]])
 
         graphList = list()
         inputlist = list()
@@ -191,7 +196,7 @@ class DirectTransformer:
             outputlist.append(answer.Y)
         try:
             gentime = time.time()
-            graph = GENERATE_scalable(inputlist, outputlist, reversedQS, groupTableSet, tableColMap, verbose = verbose)
+            graph = GENERATE_scalable(inputlist, outputlist, reversedQS, groupTableSet, tableColMap, additionalMap, verbose = verbose)
             # graph = GENERATE_group(inputlist, outputlist, reversedQS, verbose = verbose)
         except Exception as e:
             print("Exception:")

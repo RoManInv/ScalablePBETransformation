@@ -631,6 +631,23 @@ class DBUtil(metaclass = SingletonMeta):
             qg = query
 
         return qg.getQueryString_format()
+    
+    def queryReversedMap(self, XList, Y, Q, query = 'DXF'):
+        queryGen = ReverseQueryGenerator(XList, Y, Q = Q, queryGen = query)
+        queryString = queryGen.getQueryString()
+        conn = self.getDBConn()
+        cur = conn.cursor()
+
+        cur.execute(queryString)
+
+        res = cur.fetchall()
+
+        if(cur):
+            cur.close()
+        if(conn):
+            self.closeDBConn(conn)
+
+        return res
 
 
 

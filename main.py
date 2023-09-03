@@ -276,14 +276,15 @@ def testSQL(verbose = False):
     cur.execute(revQString)
     print(cur.fetchall())
 
+
 if(__name__ == '__main__'):
     args = parseArg()
-    # path = __BENCHMARK__
-    # file = __DS__
-    
-    # with open('report.txt', 'w') as f:
-    #     f.write("Result for each dataset\n")
-    #     f.write("==========\n")
-    # testDB(path, file, True)
+    path = __BENCHMARK__
+    file = __DS__
 
-    testSQL()
+    with open('report.txt', 'w') as f:
+        f.write("Result for each dataset\n")
+        f.write("==========\n")
+    testDB(path, file, True)
+
+    # testSQL()

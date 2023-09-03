@@ -1396,7 +1396,7 @@ def GENERATE_minimal(_input, _output, reversedQS, remaining, verbose = False):
             data_structures.append(data_structure)
     return data_structures
 
-def GENERATE_scalable(_input, _output, reversedQS, groupTableSet, tableColMap, verbose = False):
+def GENERATE_scalable(_input, _output, reversedQS, groupTableSet, tableColMap, additionamMap = None, verbose = False):
     """
     return structure:
     {int: {'graph': graph, 'support': int}}
@@ -1417,7 +1417,7 @@ def GENERATE_scalable(_input, _output, reversedQS, groupTableSet, tableColMap, v
         tempdict = {'graph': g, 'support': 1, 'support_list': [g.eta_s]}
         suplist = list()
         for x, y in zip(input_remaining, output_remaining):
-            ansdict = discover([x], reversedQS, g)
+            ansdict = discover([x], reversedQS, g, additionamMap)
             if(ansdict[tuple(x)] == y):
                 support += 1
                 suplist.append(x)
@@ -1428,7 +1428,7 @@ def GENERATE_scalable(_input, _output, reversedQS, groupTableSet, tableColMap, v
     return graphsupport
 
 
-def discover(Q, reversedQS, graph):
+def discover(Q, reversedQS, graph, tableColMap = None):
         ansDict = dict()
         for q in Q:
             transformation = ''
@@ -1449,7 +1449,11 @@ def discover(Q, reversedQS, graph):
                     elif(atom.id == 'Lookup'):
                         if(FirstProg):
                             atom.String = (q[atom.src[0]],)
-                            atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
+                            if(tableColMap):
+                                if(atom.Table in tableColMap.keys()):
+                                    rowidx = tableColMap[atom.Table][0][-1]
+                                else:rowidx = None
+                            atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String, rowidx)
                             currval = atom.get_value()
                             FirstProg = False
                         else:
@@ -1461,6 +1465,10 @@ def discover(Q, reversedQS, graph):
                                 else:
                                     atom.String.append(q[val])
                             atom.String = tuple(atom.String)
+                            if(tableColMap):
+                                if(atom.Table in tableColMap.keys()):
+                                    rowidx = tableColMap[atom.Table][0][-1]
+                                else:rowidx = None
                             atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
                             currval = atom.get_value()
                 transformation += currval
@@ -1469,7 +1477,10 @@ def discover(Q, reversedQS, graph):
             ansDict[tuple(q)] = transformation
         return ansDict
 
-def __get_row_from_table__(table, col, val):
+def __get_row_from_table__(table, col, val, rowidx = None):
+        if(rowidx):
+            reslist = table.iloc[rowidx, :].values.tolist()
+            return reslist
         if((type(col) is int or type(col) is str) and type(val) is str):
             reslist = table.loc[table[table.columns[col]] == val].values.tolist()
         else:
