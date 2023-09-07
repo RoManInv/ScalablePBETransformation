@@ -190,7 +190,7 @@ def Make_all_combination(edges, atoms):
     Ws = list(itertools.product(*atoms))
     return xis, Ws
 
-def Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS):
+def Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS, noTableFlag = False):
     edges_for_each_eta_t = list()
     atoms_for_each_eta_t = list()
     last_idx = len(eta_s) - 1
@@ -225,7 +225,7 @@ def Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS):
                     eta_s_old.add(node_s)
                 try:
                     # atoms, counters, lookupList = atom_search(_input, node_s, node_t, counters, j, last_idx, reversedQS)
-                    atoms, counters, lookupList = atom_search_multirow(_input, node_s, node_t, counters, j, last_idx, reversedQS, orig_eta_s)
+                    atoms, counters, lookupList = atom_search_multirow(_input, node_s, node_t, counters, j, last_idx, reversedQS, orig_eta_s, noTableFlag = False)
                     if(lookupList):
                         for item in lookupList:
                             if(str(item) not in eta_s_old and str(item) not in lookupList_all):
@@ -325,15 +325,18 @@ def atom_search(String, node_s, node_t, counters, s_num, last_idx, reversedQS, n
             return -1
     return Atoms, counters, lookupList
 
-def atom_search_multirow(String, node_s, node_t, counters, s_num, last_idx, reversedQS, remaining_eta_s, numiter = 0, specifyAtom = None):
+def atom_search_multirow(String, node_s, node_t, counters, s_num, last_idx, reversedQS, remaining_eta_s, numiter = 0, noTableFlag = False):
     node_s_visited = {i: False for i in [node_s] + list(remaining_eta_s)}
-    if(specifyAtom is None or specifyAtom == 0):
-        Atomlist = ["SubStr", "ConstStr", "Lookup"]
-    elif(specifyAtom == 1):
-        Atomlist = ["Lookup"]
-    elif(specifyAtom == 2):
+    # if(specifyAtom is None or specifyAtom == 0):
+    #     Atomlist = ["SubStr", "ConstStr", "Lookup"]
+    # elif(specifyAtom == 1):
+    #     Atomlist = ["Lookup"]
+    # elif(specifyAtom == 2):
+    #     Atomlist = ["SubStr", "ConstStr"]
+    if(noTableFlag):
         Atomlist = ["SubStr", "ConstStr"]
-    Atomlist = ["SubStr", "ConstStr", "Lookup"]
+    else:
+        Atomlist = ["SubStr", "ConstStr", "Lookup"]
     Atoms = list()
     for atom in Atomlist:
         if atom == "SubStr":
@@ -738,7 +741,7 @@ def group_up(xis, Ws):
 
     return xis_grouped, ws_grouped
 
-def GENERATE(_input, _output, reversedQS, verbose = False):
+def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
     groupDict = dict()
     if(type(_input) is list or type(_input) is tuple):
         eta_s = list()
@@ -757,7 +760,7 @@ def GENERATE(_input, _output, reversedQS, verbose = False):
     try:
         if(verbose):
             print("making edge for " + str(_input) + " AND " + str(_output))
-        edges, atoms = Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS)
+        edges, atoms = Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS, noTableFlag = False)
         if(verbose):
             with open('edges.txt', 'w') as f:
                 for edge, atom in zip(edges, atoms):
@@ -1039,7 +1042,7 @@ def GENERATE_minimal(_input, _output, reversedQS, remaining, verbose = False):
             data_structures.append(data_structure)
     return data_structures
 
-def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
+def GENERATE_scalable(_input, _output, reversedQS, noTableFlag = False, verbose = False):
     """
     return structure:
     {int: {'graph': graph, 'support': int}}
@@ -1050,7 +1053,7 @@ def GENERATE_scalable(_input, _output, reversedQS, verbose = False):
     input_remaining = _input[1:]
     output_remaining = _output[1:]
 
-    graphs = GENERATE(input_single, output_single, reversedQS, verbose)
+    graphs = GENERATE(input_single, output_single, reversedQS, noTableFlag = False, verbose = verbose)
     if(graphs is None):
         return None
 
