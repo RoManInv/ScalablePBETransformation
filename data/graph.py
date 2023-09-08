@@ -225,7 +225,7 @@ def Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS, noTableFlag 
                     eta_s_old.add(node_s)
                 try:
                     # atoms, counters, lookupList = atom_search(_input, node_s, node_t, counters, j, last_idx, reversedQS)
-                    atoms, counters, lookupList = atom_search_multirow(_input, node_s, node_t, counters, j, last_idx, reversedQS, orig_eta_s, noTableFlag = False)
+                    atoms, counters, lookupList = atom_search_multirow(_input, node_s, node_t, counters, j, last_idx, reversedQS, orig_eta_s, noTableFlag = noTableFlag)
                     if(lookupList):
                         for item in lookupList:
                             if(str(item) not in eta_s_old and str(item) not in lookupList_all):
@@ -760,7 +760,7 @@ def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
     try:
         if(verbose):
             print("making edge for " + str(_input) + " AND " + str(_output))
-        edges, atoms = Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS, noTableFlag = False)
+        edges, atoms = Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS, noTableFlag = noTableFlag)
         if(verbose):
             with open('edges.txt', 'w') as f:
                 for edge, atom in zip(edges, atoms):
