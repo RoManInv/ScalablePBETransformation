@@ -143,17 +143,23 @@ class DirectTransformer:
         MAX_ITER = 10
         dbUtil = DBUtil()
 
+        retrievedFlag = True
+
         res = dbUtil.queryWebTables(XList, Y, 2, query)
-        for item in res:
-            tableList.append(item[0])
-        print(len(tableList))
+        if(res):
+            for item in res:
+                tableList.append(item[0])
+            print(len(tableList))
 
-        reversedQS = dbUtil.reversedQuery_mt(tableList)
-        # for key, tableitem in reversedQS.items():
-        #     reversedQS[key] = pd.DataFrame(tableitem)
+            reversedQS = dbUtil.reversedQuery_mt(tableList)
+            # for key, tableitem in reversedQS.items():
+            #     reversedQS[key] = pd.DataFrame(tableitem)
 
-        if(len(tableList) > 2000 or len(reversedQS) > 3500):
-            return None, None
+            if(len(tableList) > 2000 or len(reversedQS) > 3500):
+                return None, None
+        else:
+            res = None
+            retrievedFlag = False
 
         for x, y in zip(XList, Y):
             # print(x, y)

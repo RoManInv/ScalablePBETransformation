@@ -261,8 +261,12 @@ def testbatch_func(verbose = False):
 
 if(__name__ == '__main__'):
     args = parseArg()
-    with open('report.txt', 'w') as f:
-        f.write("Result for each dataset\n")
-        f.write("==========\n")
-    testbatch_exp(True)
-    testbatch_func(True)
+    # with open('report.txt', 'w') as f:
+    #     f.write("Result for each dataset\n")
+    #     f.write("==========\n")
+    # testbatch_exp(True)
+    # testbatch_func(True)
+    path = 'benchmarkForReport/experiment'
+    file = 'Benchmark_Extract_month_from_datetime.csv'
+
+    testDB(path, file, verbose = True)
