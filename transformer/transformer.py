@@ -163,7 +163,8 @@ class DirectTransformer:
 
         for x, y in zip(XList, Y):
             # print(x, y)
-            xlist = [str(item).lower() for item in x]
+            # xlist = [str(item).lower() for item in x]
+            xlist = [tokenizer.tokenize(item, y) for item in x]
             ans = Answer(xlist, str(y).lower(), isExample = True)
             answerList.append(ans)
 

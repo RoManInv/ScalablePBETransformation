@@ -340,7 +340,7 @@ def atom_search_multirow(String, node_s, node_t, counters, s_num, last_idx, reve
     Atoms = list()
     for atom in Atomlist:
         if atom == "SubStr":
-            flag = False
+            # flag = False
             if(node_s in remaining_eta_s):
                 src = [remaining_eta_s.index(node_s)]
             else:
@@ -350,26 +350,34 @@ def atom_search_multirow(String, node_s, node_t, counters, s_num, last_idx, reve
             except:
                 isdecimal = 0
             try:
-                _isalpha = tk.isalpha(node_s)
+                _isalpha = tk.isalpha(node_t)
             except:
                 _isalpha = 0
-            if isdecimal:
-                func = prog.SubStr(node_s, "NumTok", counters["NumTok"], 0, src)
-                counters["NumTok"] += 1
-                if func.get_value() == node_t:
+            # if isdecimal:
+            #     func = prog.SubStr(node_s, "NumTok", counters["NumTok"], 0, src)
+            #     counters["NumTok"] += 1
+            #     if func.get_value() == node_t:
+            #         Atoms.append(func)
+            # if _isalpha:
+            #     func = prog.SubStr(node_s, "AlphaTok", counters["AlphaTok"], 0, src)
+            #     counters["AlphaTok"] += 1
+            #     if func.get_value() == node_t:
+            #         Atoms.append(func)
+            # if s_num == 0 and node_s == node_t:
+            #     func = prog.SubStr(node_s, "StartTok", 0, 0, src)
+            #     if func.get_value() == node_t:
+            #         Atoms.append(func)
+            # if s_num == last_idx and node_s == node_t:
+            #     func = prog.SubStr(node_s, "EndTok", 0, 0, src)
+            #     if func.get_value() == node_t:
+            #         Atoms.append(func)
+            node_s_list = node_s.split()
+            if(node_t in node_s_list):
+                if(isdecimal):
+                    func = prog.SubStr(node_s, "NumTok", counters["NumTok"], node_s_list.index(node_t), src)
                     Atoms.append(func)
-            if _isalpha:
-                func = prog.SubStr(node_s, "AlphaTok", counters["AlphaTok"], 0, src)
-                counters["AlphaTok"] += 1
-                if func.get_value() == node_t:
-                    Atoms.append(func)
-            if s_num == 0 and node_s == node_t:
-                func = prog.SubStr(node_s, "StartTok", 0, 0, src)
-                if func.get_value() == node_t:
-                    Atoms.append(func)
-            if s_num == last_idx and node_s == node_t:
-                func = prog.SubStr(node_s, "EndTok", 0, 0, src)
-                if func.get_value() == node_t:
+                elif(_isalpha):
+                    func = prog.SubStr(node_s, "AlphaTok", counters["NumTok"], node_s_list.index(node_t), src)
                     Atoms.append(func)
         elif atom == "ConstStr":
             func = prog.ConstStr(node_t, 0)

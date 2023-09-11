@@ -172,13 +172,16 @@ def make_token_withidx(nodes):
 
 @total_ordering
 class SubStr():
-	def __init__(self, String, Token, num, inputcol, src):
-		self.String = String
+	def __init__(self, String, Token, num, idx, src):
+		if(type(String) is str):
+			self.String = String
+		elif((type(self.String) is list or type(self.String) is tuple) and len(self.String) == 1):
+			self.String = String[0]
 		self.Token = Token
 		self.num = num
 		self.id = "SubStr"
 		self.src = src
-		self.inputcol = inputcol
+		self.idx = idx
 
 	def __eq__(self, other):
 		if not isinstance(other, SubStr):
@@ -201,21 +204,36 @@ class SubStr():
 	def __repr__(self) -> str:
 		return self.__str__()
 
+	# def get_value(self):
+	# 	#print("string, token, num", self.String, self.Token, self.num)
+	# 	if Nonecheck(self.String):
+	# 		return ""
+	# 		# if(Nonecheck(self.inputcol)):
+	# 		# 	return ""
+	# 		# else:
+	# 		# 	self.String = 
+	# 	else:
+	# 		#print(self.String, self.Token, self.num)
+	# 		try:
+	# 			x = self.getnode(self.String, self.Token)[self.num]
+	# 			return str(x)
+	# 		except:
+	# 			return None
 	def get_value(self):
-		#print("string, token, num", self.String, self.Token, self.num)
-		if Nonecheck(self.String):
+		# print(self.src)
+		if(type(self.src) is list or type(self.src) is tuple):
+			src = self.src[0]
+		if(len(self.String) < src):
 			return ""
-			# if(Nonecheck(self.inputcol)):
-			# 	return ""
-			# else:
-			# 	self.String = 
+		if((type(self.String) is list or type(self.String) is tuple) and len(self.String) == 1):
+			self.String = self.String[0]
+		if(not self.String):
+			return ""
 		else:
-			#print(self.String, self.Token, self.num)
-			try:
-				x = self.getnode(self.String, self.Token)[self.num]
-				return str(x)
-			except:
-				return None
+			print(self.String)
+			print()
+			print(self.idx)
+			return str(self.String.split()[self.idx])
 
 	def getnode(self, String, Token):
 		if Token == "NumTok":

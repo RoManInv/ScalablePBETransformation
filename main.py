@@ -261,12 +261,16 @@ def testbatch_func(verbose = False):
 
 if(__name__ == '__main__'):
     args = parseArg()
-    # with open('report.txt', 'w') as f:
-    #     f.write("Result for each dataset\n")
-    #     f.write("==========\n")
+    with open('report.txt', 'w') as f:
+        f.write("Result for each dataset\n")
+        f.write("==========\n")
     # testbatch_exp(True)
     # testbatch_func(True)
     path = 'benchmarkForReport/experiment'
     file = 'Benchmark_Extract_month_from_datetime.csv'
 
     testDB(path, file, verbose = True)
+    # tokenizer = Tokenizer()
+    # data = pd.read_csv(os.path.join(path, file))
+    # for row in data.values:
+    #     print(row[0], tokenizer.tokenize(row[0], row[1]))

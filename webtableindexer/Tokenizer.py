@@ -29,7 +29,7 @@ class Tokenizer(metaclass = SingletonMeta):
     def __punc_ident__(self, src: str) -> set:
         return set([i for i in src if i in string.punctuation])
     
-    def tokenzie(self, text: str, src: str = None) -> str:
+    def tokenize(self, text: str, src: str = None) -> str:
         text = text.lower()
         if(src is None):
             return text
