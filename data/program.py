@@ -230,9 +230,9 @@ class SubStr():
 		if(not self.String):
 			return ""
 		else:
-			print(self.String)
-			print()
-			print(self.idx)
+			# print(self.String)
+			# print()
+			# print(self.idx)
 			return str(self.String.split()[self.idx])
 
 	def getnode(self, String, Token):
