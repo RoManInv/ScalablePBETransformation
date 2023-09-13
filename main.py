@@ -100,6 +100,7 @@ def testCSV(verbose):
 
 
 def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
+    tokenizer = Tokenizer()
     data = pd.read_csv(os.path.join(path, file))
     examples = data.iloc[:numExample, :]
     XList = examples.iloc[:, :-1].values.tolist()
@@ -113,9 +114,14 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     XList = XList_tokenize
     Y = [str(item).lower() for item in Y]
     exampleList = list()
+    xlist = list()
+    for x, y in zip(XList, Y):
+        xlist.append([tokenizer.tokenize(xelem, y) for xelem in x])
+    XList = xlist
     for x, y in zip(XList, Y):
         ans = Answer(x, y, isExample = True)
         exampleList.append(ans)
+    yexample = Y[0]
     if(len(data) < numExample + qnum):
         exceedFlag = True
     else:
@@ -126,6 +132,10 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     else:
         Q = data.iloc[numExample:, :-1].values.tolist()
         QTruth = data.iloc[numExample:, -1].values.tolist()
+    qlist = list()
+    for q in Q:
+        qlist.append([tokenizer.tokenize(qelem, yexample) for qelem in q])
+    Q = qlist
     for i in range(len(Q)):
         QTruth[i] = str(QTruth[i]).lower()
         for j in range(len(Q[i])):
@@ -134,6 +144,8 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     QTruth_dict = dict()
     for q, qt in zip(Q, QTruth):
         QTruth_dict[q] = qt
+
+    # print(XList, Y, Q)
 
     return XList, Y, exampleList, Q, QTruth_dict
 
@@ -217,7 +229,7 @@ def testDB(path, mainfile, verbose = False):
                 f.write('\n')
         for key, val in ansDict.items():
             if(not val == ''):
-                if(QTruth[tuple(key)] == val):
+                if(QTruth[tuple(key)].lower() == val.lower()):
                     correct += 1
                     if(key in remainingquery):
                         remainingquery.remove(key)

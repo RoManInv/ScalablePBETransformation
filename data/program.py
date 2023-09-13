@@ -233,7 +233,10 @@ class SubStr():
 			# print(self.String)
 			# print()
 			# print(self.idx)
-			return str(self.String.split()[self.idx])
+			# res = self.getnode(str(self.String.split()[self.idx]), self.Token)
+			res = str(self.String.split()[self.idx])
+			# print(res)
+			return res
 
 	def getnode(self, String, Token):
 		if Token == "NumTok":

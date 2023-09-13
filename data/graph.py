@@ -1156,7 +1156,7 @@ class DAG():
         else:
             for item in self.W:
                 if item.__class__.__name__ == "SubStr":
-                    print("(DAG:W)", item.__class__.__name__, "(", item.String, ",", item.Token, ",", item.num, ")")
+                    print("(DAG:W)", item.__class__.__name__, "(", item.String, ",", item.Token, ",", item.idx, ")")
                 elif item.__class__.__name__ == "ConstStr":
                     print("(DAG:W)", item.__class__.__name__, "(", item.get_value(), ")")
                 elif item.__class__.__name__ == "FirstStr":
@@ -1191,7 +1191,7 @@ class DAG():
                 tempstr += '(' + self.__print_each_atom__(atom) + ')'
         else:
             if item.__class__.__name__ == "SubStr":
-                tempstr = "(DAG:W)" +  str(item.__class__.__name__) + "(" + str(item.String) + "," + str(item.Token) + "," + str(item.num) + ")"
+                tempstr = "(DAG:W)" +  str(item.__class__.__name__) + "(" + str(item.String) + "," + str(item.Token) + "," + str(item.idx) + ")"
             elif item.__class__.__name__ == "ConstStr":
                 tempstr = "(DAG:W)" +  str(item.__class__.__name__) + "(" + str(item.get_value()) + ")"
             elif item.__class__.__name__ == "FirstStr":
