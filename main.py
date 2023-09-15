@@ -6,6 +6,7 @@ from transformer.transformer import DirectTransformer
 from data.graph import GENERATE, discover
 from utils.intersect import intersect_procedure
 from transformer.transformer import DirectTransformer
+from utils.tokens import Makenode
 
 import os
 import pandas as pd
@@ -182,7 +183,7 @@ def testDB(path, mainfile, verbose = False):
 
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
-    graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'DXF')
+    graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'Proteus')
     if(graphs is None and reversedQS is None):
         print("This file is temporarily skipped due to taking too long")
         with open('report.txt', 'a') as f:
@@ -276,13 +277,16 @@ if(__name__ == '__main__'):
     with open('report.txt', 'w') as f:
         f.write("Result for each dataset\n")
         f.write("==========\n")
-    testbatch_exp(True)
-    testbatch_func(True)
-    # path = 'benchmarkForReport/experiment'
-    # file = 'Benchmark_Extract_month_from_datetime.csv'
+    # testbatch_exp(True)
+    # testbatch_func(True)
+    path = 'benchmarkForReport/experiment'
+    file = 'CountryToCapitalWithDifferentHeader.csv'
 
-    # testDB(path, file, verbose = True)
+    testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
     # data = pd.read_csv(os.path.join(path, file))
+    # for row in data.values:
+    #     for val in row:
+    #         print(Makenode(val, []))
     # for row in data.values:
     #     print(row[0], tokenizer.tokenize(row[0], row[1]))

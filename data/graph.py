@@ -906,12 +906,12 @@ def GENERATE_minimal(_input, _output, reversedQS, remaining, verbose = False):
     remaininglist = set()
     if(type(_input) is list or type(_input) is tuple):
         eta_s = list()
-        for item in _input:
+        # for item in _input:
             # eta_s_temp = prog.Makenode(str(item), [])
             # eta_s.extend(eta_s_temp)
-            eta_s.append(str(item))
+            # eta_s.append(str(item))
         # print(eta_s)
-    # eta_s = prog.Makenode(str(_input), [])
+    eta_s = prog.Makenode(str(_input), [])
     for inputstr in remaining:
         for item in inputstr:
             remaininglist.add(str(item))

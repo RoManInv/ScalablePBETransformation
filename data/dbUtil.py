@@ -7,12 +7,14 @@ import vertica_python
 import os
 import sqlite3
 import re
+import string
 
 
 from utils.Singleton import SingletonMeta
 from data.Table import Table
 from webtableindexer.Tokenizer import Tokenizer
 from data.DBConn import PostgresDBConn, VerticaDBConn
+from utils.tokens import Makenode
 
 class QueryGenerator():
     def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
@@ -161,6 +163,216 @@ class DXFQueryGenerator(QueryGenerator):
             if(i > 0):
                 __querystring__ += ',\n'
             __colstring__ = self.__colQueryStrGen__(i + 1)
+            __querystring__ += '\t'
+            __querystring__ += __colstring__
+        __querystring__ += ',\n\t'
+        __Ystring__ = self.__YStringGen__()
+        __querystring__ += __Ystring__
+        
+        __wherestring__ = self.__whereClauseGen__(numcols)
+        # print(__wherestring__)
+
+        if(__wherestring__):
+            __querystring__ += '\n WHERE \n'
+            __querystring__ += __wherestring__
+        
+        # __querystring__ += "\n UNION \n"
+
+        
+
+        
+
+        return __querystring__
+
+
+    def getQueryString(self) -> str:
+        # XList = self.XList
+        # Y = self.Y
+        # tau = self.tau
+        querystring = self.__queryStringGen__()
+        querystring = querystring.replace("\n", "")
+        querystring = querystring.replace("\t", "")
+
+        return querystring
+    
+    def getQueryString_format(self) -> str:
+        # XList = self.XList
+        # Y = self.Y
+        # tau = self.tau
+        querystring = self.__queryStringGen__()
+        return querystring
+
+class ProteusQueryGenerator(QueryGenerator):
+    def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
+        super().__init__(XList, Y, tau)
+        # print(self.XList)
+        
+        # for i in range(len(self.XList)):
+        #     XExtend = set()
+        #     for token in self.XList[i]:
+        #         tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
+        #         XExtend = XExtend.union(tokSet)
+        #         print(XExtend)
+        #     self.XList[i].extend(list(XExtend))
+        
+        # YExtend = set()
+        # for token in self.Y:
+        #     tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
+        #     YExtend = YExtend.union(tokSet)
+        #     print(YExtend)
+        # self.Y.extend(list(YExtend))
+        # print(self.XList)
+
+    def __colQueryStrGen__(self, qid: int, colList: list) -> str:
+        __qString__ = """
+                      (SELECT tableid, colid 
+                       FROM main_tokenized mt{}
+                       WHERE tokenized IN {}
+                       GROUP BY (tableid, colid) 
+                       HAVING COUNT(DISTINCT tokenized) >= {}) AS colX{}
+                      """
+        
+        valList = colList
+        tau = self.tau
+        
+        if(len(valList) == 0):
+            valString = "()"
+        elif(len(valList) == 1):
+            if(type(valList) is tuple or type(valList) is list):
+                valString = "(" + str(valList[0]) + ")"
+            elif(type(valList) is str):
+                valString = "(" + str(valList) + ")"
+        else:
+            if(type(valList) is tuple or type(valList) is list):
+                stringList = list()
+                # valString = str(tuple(valList))
+                for item in valList:
+                    if(type(item) is list or type(item) is tuple):
+                        stringList.append(item[0])
+                    else:
+                        stringList.append(item)
+        valString = tuple(stringList)
+
+        if(len(valList) < tau):
+            tauval = len(valList)
+        else:
+            tauval = tau
+
+        __qString__ = __qString__.format(qid, valString, tauval, qid)
+
+        return __qString__
+    
+    def __YStringGen__(self) -> str:
+        __qString__ = """
+                     (SELECT tableid, colid 
+                      FROM main_tokenized mty
+                      WHERE tokenized IN {}
+                      GROUP BY (tableid, colid) 
+                      HAVING COUNT(DISTINCT tokenized) >= {}) AS colY
+                      """
+        Y = self.Y
+        tau = self.tau
+        YExtend = set()
+        for token in Y:
+            tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
+            YExtend = YExtend.union(tokSet)
+        Y.extend(list(YExtend))
+
+        if(len(Y) == 0):
+            valString = "()"
+        elif(len(Y) == 1):
+            if(type(Y) is tuple or type(Y) is list):
+                valString = "(" + str(Y[0]) + ")"
+            elif(type(Y) is str):
+                valString = "(" + str(Y) + ")"
+        else:
+            if(type(Y) is tuple or type(Y) is list):
+                valString = str(tuple(Y))
+
+        if(len(Y) < tau):
+            tauval = len(Y)
+        else:
+            tauval = tau
+
+        __qString__ = __qString__.format(valString, tauval)
+
+        return __qString__
+    
+    def __whereClauseGen__ (self, numcols: int) -> Union[str, None]:
+        __template_tableid__ = "colX1.tableid = colX{}.tableid"
+        __template_colid__ = "colX{}.colid <> colX{}.colid"
+        __template_colid_y__ = "colX{}.colid <> colY.colid"
+
+        # if(numcols == 1):
+        #     return None
+        
+        tableidList = list()
+        colidList = list()
+        for i in range(numcols):
+            if(i + 1 == 1):
+                continue
+            tableidList.append(__template_tableid__.format(str(i + 1)))
+        
+        colids = [i + 1 for i in range(numcols)]
+        for comb in list(combinations(colids, 2)):
+            colidList.append(__template_colid__.format(comb[0], comb[1]))
+
+        colyList = list()
+        for i in colids:
+            colyList.append(__template_colid_y__.format(str(i)))
+        
+        whereClause = " AND ".join(tableidList)
+        if(whereClause):
+            whereClause += " AND colX1.tableid = colY.tableid"
+        else:
+            whereClause += "colX1.tableid = colY.tableid"
+        whereClause += " AND \n"
+        whereClause += " AND ".join(colidList)
+        whereClause += " AND ".join(colyList)
+
+        return whereClause
+
+
+    def __queryStringGen__(self) -> str:
+        """
+        Generating SQL query string.
+
+        SELECT colX1.tableid FROM
+	        (SELECT tableid, colid FROM main_tokenized mt WHERE tokenized IN ('emil adolf von behring') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX1,
+	        (SELECT tableid, colid FROM main_tokenized mt2 WHERE tokenized IN ('1901') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colX2,
+            (SELECT tableid FROM main_tokenized mt3 WHERE tokenized IN ('medicine') GROUP BY (tableid, colid) HAVING COUNT(DISTINCT tokenized) > 0) AS colY
+        WHERE 
+	        colX1.tableid = colX2.tableid AND colX1.tableid = colY.tableid
+	        colX1.colid <> colX2.colid AND colX1.colid <> colY.colid AND colX2.colid <> colY.colid
+        
+
+        Params:
+            XList (list of List): list of X
+            Y (list): list of Y
+        Return:
+            qString (str): final query string
+        """
+
+        XList = self.XList
+        Y = self.Y
+        tau = self.tau
+
+        Xlist_t = [list(col) for col in zip(*XList)]
+        
+        for i in range(len(Xlist_t)):
+            XExtend = set()
+            for token in Xlist_t[i]:
+                tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
+                XExtend = XExtend.union(tokSet)
+            Xlist_t[i].extend(list(XExtend))
+        print(Xlist_t)
+        numcols = len(Xlist_t)
+
+        __querystring__ = "SELECT colX1.tableid FROM \n"
+        for i, col in enumerate(Xlist_t):
+            if(i > 0):
+                __querystring__ += ',\n'
+            __colstring__ = self.__colQueryStrGen__(i + 1, col)
             __querystring__ += '\t'
             __querystring__ += __colstring__
         __querystring__ += ',\n\t'
@@ -428,6 +640,8 @@ class DBUtil(metaclass = SingletonMeta):
             qg = L1QueryGenerator(XList, Y, tau)
         elif(query == 'DXF'):
             qg = DXFQueryGenerator(XList, Y, tau)
+        elif(query == 'Proteus'):
+            qg = ProteusQueryGenerator(XList, Y, tau)
         elif(isinstance(query, QueryGenerator)):
             qg = query
 
@@ -498,7 +712,8 @@ class DBUtil(metaclass = SingletonMeta):
         if(not conn):
             conn = self.getDBConn()
         queryString = self.getQueryString(XList, Y, tau, query)
-        # print(queryString)
+        # print(query)
+        print(queryString)
 
         cur = conn.cursor()
         cur.execute(queryString)

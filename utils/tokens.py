@@ -93,6 +93,8 @@ def getnode(String, Token):
 		node = MultiplyTok(String)
 	elif Token == "DollarTok":
 		node = DollarTok(String)
+	elif Token == "ColumnTok":
+		node = ColumnTok(String)
 	else:
 		print("getnode didn't match any token: ", String)
 		return -1
@@ -204,6 +206,10 @@ def DollarTok(string):
 	node = ["$"]
 	return node
 
+def ColumnTok(string):
+	node = [":"]
+	return node
+
 
 def identifyToken(String):
 	if String == "":
@@ -249,6 +255,8 @@ def identifyToken(String):
 			token = "MultiplyTok"
 		elif firstchar == '$':
 			token = "DollarTok"
+		elif firstchar == ':':
+			token = "ColumnTok"
 		else:
 			print("identifyToken couldn't find any token. Input: ", firstchar)
 			return -1
