@@ -155,6 +155,8 @@ def testDB(path, mainfile, verbose = False):
     __path__ = path
     # __mainfile__ = 'CountryToCapital.csv'
     __mainfile__ = mainfile
+    with open('report.txt', 'a') as f:
+            f.write("Testing " + str(__mainfile__) + '\n')
 
     XList, Y, exampleList, Q, QTruth = getExampleAndQuery(__path__, __mainfile__)
     # Qlist_sep = list()
@@ -188,6 +190,7 @@ def testDB(path, mainfile, verbose = False):
         print("This file is temporarily skipped due to taking too long")
         with open('report.txt', 'a') as f:
             f.write("This file is temporarily skipped due to taking too long\n")
+            f.write("===============\n")
         return
     # print(graphs[0])
     graphs = graphs[0]
@@ -228,6 +231,7 @@ def testDB(path, mainfile, verbose = False):
             with open('report.txt', 'a') as f:
                 f.write(str(ansDict))
                 f.write('\n')
+                f.write("===============\n")
         for key, val in ansDict.items():
             if(not val == ''):
                 if(QTruth[tuple(key)].lower() == val.lower()):
@@ -249,6 +253,7 @@ def testDB(path, mainfile, verbose = False):
 
 
             f.write('Total time consumption: ' + str(time.time() - starttime) + '\n')
+            f.write("===============\n")
 
 def testbatch_exp(verbose = False):
     path = 'benchmarkForReport/experiment'
@@ -277,12 +282,12 @@ if(__name__ == '__main__'):
     with open('report.txt', 'w') as f:
         f.write("Result for each dataset\n")
         f.write("==========\n")
-    # testbatch_exp(True)
-    # testbatch_func(True)
-    path = 'benchmarkForReport/experiment'
-    file = 'CountryToCapitalWithDifferentHeader.csv'
+    testbatch_exp(True)
+    testbatch_func(True)
+    # path = 'benchmarkForReport/experiment'
+    # file = 'CountryToCapitalWithDifferentHeader.csv'
 
-    testDB(path, file, verbose = True)
+    # testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
     # data = pd.read_csv(os.path.join(path, file))
     # for row in data.values:
