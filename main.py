@@ -257,9 +257,14 @@ def testDB(path, mainfile, verbose = False):
 
 def testbatch_exp(verbose = False):
     path = 'benchmarkForReport/experiment'
-    
+    with open('exclude.txt', 'r') as f:
+        lines = f.readlines()
+    lines = [line.strip() for line in lines]
     for file in os.listdir(path):
         print('Testing ' + str(file))
+        if(str(file) in lines):
+            print('skipped')
+            continue
         if(os.path.isfile(os.path.join(path, file))):
             try:
                 testDB(path, file, verbose)
@@ -268,9 +273,14 @@ def testbatch_exp(verbose = False):
 
 def testbatch_func(verbose = False):
     path = 'benchmarkForReport/functional'
-    
+    with open('exclude.txt', 'r') as f:
+        lines = f.readlines()
+    lines = [line.strip() for line in lines]
     for file in os.listdir(path):
         print('Testing ' + str(file))
+        if(str(file) in lines):
+            print('skipped')
+            continue
         if(os.path.isfile(os.path.join(path, file))):
             try:
                 testDB(path, file, verbose)
@@ -284,8 +294,8 @@ if(__name__ == '__main__'):
         f.write("==========\n")
     testbatch_exp(True)
     testbatch_func(True)
-    # path = 'benchmarkForReport/experiment'
-    # file = 'CountryToCapitalWithDifferentHeader.csv'
+    path = 'benchmarkForReport/experiment'
+    file = 'CountryToCapitalWithDifferentHeader.csv'
 
     # testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
