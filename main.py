@@ -258,9 +258,14 @@ def testDB(path, mainfile, verbose = False):
 
 def testbatch_exp(verbose = False):
     path = 'benchmarkForReport/experiment'
-    
+    with open('exclude.txt', 'r') as f:
+        lines = f.readlines()
+    lines = [line.strip() for line in lines]
     for file in os.listdir(path):
         print('Testing ' + str(file))
+        if(str(file) in lines):
+            print('skipped')
+            continue
         if(os.path.isfile(os.path.join(path, file))):
             try:
                 testDB(path, file, verbose)
@@ -269,9 +274,14 @@ def testbatch_exp(verbose = False):
 
 def testbatch_func(verbose = False):
     path = 'benchmarkForReport/functional'
-    
+    with open('exclude.txt', 'r') as f:
+        lines = f.readlines()
+    lines = [line.strip() for line in lines]
     for file in os.listdir(path):
         print('Testing ' + str(file))
+        if(str(file) in lines):
+            print('skipped')
+            continue
         if(os.path.isfile(os.path.join(path, file))):
             try:
                 testDB(path, file, verbose)
@@ -283,6 +293,7 @@ def genComplexT(path, file, header):
     generator.generate(path, file, header = header)
 
 if(__name__ == '__main__'):
+<<<<<<< HEAD
     # args = parseArg()
     # with open('report.txt', 'w') as f:
     #     f.write("Result for each dataset\n")
@@ -293,6 +304,16 @@ if(__name__ == '__main__'):
 
     # path = 'benchmarkForReport/experiment'
     # file = 'CountryToCapitalWithDifferentHeader.csv'
+=======
+    args = parseArg()
+    with open('report.txt', 'w') as f:
+        f.write("Result for each dataset\n")
+        f.write("==========\n")
+    testbatch_exp(True)
+    testbatch_func(True)
+    path = 'benchmarkForReport/experiment'
+    file = 'CountryToCapitalWithDifferentHeader.csv'
+>>>>>>> 4ea49b65c731b2f88b3399b88dd4b58d283e8b94
 
     # testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
