@@ -7,6 +7,7 @@ from data.graph import GENERATE, discover
 from utils.intersect import intersect_procedure
 from transformer.transformer import DirectTransformer
 from utils.tokens import Makenode
+from utils.complexTGen import complexTGenerator
 
 import os
 import pandas as pd
@@ -277,13 +278,19 @@ def testbatch_func(verbose = False):
             except:
                 print('This file cannot be read')
 
+def genComplexT(path, file, header):
+    generator = complexTGenerator(3)
+    generator.generate(path, file, header = header)
+
 if(__name__ == '__main__'):
-    args = parseArg()
-    with open('report.txt', 'w') as f:
-        f.write("Result for each dataset\n")
-        f.write("==========\n")
-    testbatch_exp(True)
-    testbatch_func(True)
+    # args = parseArg()
+    # with open('report.txt', 'w') as f:
+    #     f.write("Result for each dataset\n")
+    #     f.write("==========\n")
+    # testbatch_exp(True)
+    # testbatch_func(True)
+
+
     # path = 'benchmarkForReport/experiment'
     # file = 'CountryToCapitalWithDifferentHeader.csv'
 
@@ -295,3 +302,7 @@ if(__name__ == '__main__'):
     #         print(Makenode(val, []))
     # for row in data.values:
     #     print(row[0], tokenizer.tokenize(row[0], row[1]))
+
+    path = "benchmarkcomplex"
+    file = "CountryToLanguage.csv"
+    genComplexT(path, file, 0)
