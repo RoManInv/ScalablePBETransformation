@@ -375,7 +375,7 @@ class ProteusQueryGenerator(QueryGenerator):
             __colstring__ = self.__colQueryStrGen__(i + 1, col)
             __querystring__ += '\t'
             __querystring__ += __colstring__
-        __querystring__ += ',\n\t'
+        __querystring__ += 'JOIN \n\t'
         __Ystring__ = self.__YStringGen__()
         __querystring__ += __Ystring__
         
@@ -383,7 +383,7 @@ class ProteusQueryGenerator(QueryGenerator):
         # print(__wherestring__)
 
         if(__wherestring__):
-            __querystring__ += '\n WHERE \n'
+            __querystring__ += '\n ON \n'
             __querystring__ += __wherestring__
         
         # __querystring__ += "\n UNION \n"

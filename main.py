@@ -186,7 +186,9 @@ def testDB(path, mainfile, verbose = False):
 
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
+    currtime = time.time()
     graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'Proteus')
+    print("Time consumption for full transformation: " + str(time.time() - currtime))
     if(graphs is None and reversedQS is None):
         print("This file is temporarily skipped due to taking too long")
         with open('report.txt', 'a') as f:
@@ -293,29 +295,16 @@ def genComplexT(path, file, header):
     generator.generate(path, file, header = header)
 
 if(__name__ == '__main__'):
-<<<<<<< HEAD
-    # args = parseArg()
-    # with open('report.txt', 'w') as f:
-    #     f.write("Result for each dataset\n")
-    #     f.write("==========\n")
-    # testbatch_exp(True)
-    # testbatch_func(True)
-
-
-    # path = 'benchmarkForReport/experiment'
-    # file = 'CountryToCapitalWithDifferentHeader.csv'
-=======
     args = parseArg()
     with open('report.txt', 'w') as f:
         f.write("Result for each dataset\n")
         f.write("==========\n")
-    testbatch_exp(True)
-    testbatch_func(True)
+    # testbatch_exp(True)
+    # testbatch_func(True)
     path = 'benchmarkForReport/experiment'
     file = 'CountryToCapitalWithDifferentHeader.csv'
->>>>>>> 4ea49b65c731b2f88b3399b88dd4b58d283e8b94
 
-    # testDB(path, file, verbose = True)
+    testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
     # data = pd.read_csv(os.path.join(path, file))
     # for row in data.values:
@@ -324,6 +313,6 @@ if(__name__ == '__main__'):
     # for row in data.values:
     #     print(row[0], tokenizer.tokenize(row[0], row[1]))
 
-    path = "benchmarkcomplex"
-    file = "CountryToLanguage.csv"
-    genComplexT(path, file, 0)
+    # path = "benchmarkcomplex"
+    # file = "CountryToLanguage.csv"
+    # genComplexT(path, file, 0)

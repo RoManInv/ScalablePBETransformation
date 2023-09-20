@@ -144,14 +144,16 @@ class DirectTransformer:
         dbUtil = DBUtil()
 
         retrievedFlag = True
-
+        currtime = time.time()
         res = dbUtil.queryWebTables(XList, Y, 2, query)
+        print("\tTime consumption of querying web table: " + str(time.time() - currtime))
         if(res):
             for item in res:
                 tableList.append(item[0])
             print(len(tableList))
-
+            currtime = time.time()
             reversedQS = dbUtil.reversedQuery_mt(tableList)
+            print("\tTime consumption of table retrieval: " + str(time.time() - currtime))
             # for key, tableitem in reversedQS.items():
             #     reversedQS[key] = pd.DataFrame(tableitem)
 
@@ -193,8 +195,10 @@ class DirectTransformer:
             print("Exception:")
             traceback.print_exc()
             graph = None
-        if(graph):
+        finally:
             print('\tTime for graph generation: ' + str(time.time() - gentime))
+        if(graph):
+            # print('\tTime for graph generation: ' + str(time.time() - gentime))
             if(graph is not None):
                 graphList.append(graph)
         

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from collections import defaultdict
 import itertools
+import time
 import traceback
 
 import data.program as prog
@@ -8,7 +9,7 @@ import utils.tokens as tk
 from utils.timeout import timeout
 from utils.key import identifyKeyCand
 
-MAX_ITER = 3
+MAX_ITER = 2
 
 def __df_contain_str__(df, val):
     cols = df.columns
@@ -768,7 +769,9 @@ def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
     try:
         if(verbose):
             print("making edge for " + str(_input) + " AND " + str(_output))
+        currtime = time.time()
         edges, atoms = Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t, reversedQS, noTableFlag = noTableFlag)
+        print("\t\tTime for raw graph generation: " + str(time.time() - currtime))
         if(verbose):
             with open('edges.txt', 'w') as f:
                 for edge, atom in zip(edges, atoms):
@@ -816,9 +819,11 @@ def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
                 with open('groupdetail.txt', 'a') as f:
                     f.write(str(xis_g) + '\n')
                     f.write(str(Ws_g) + '\n')
+            currtime = time.time()
             xis_g, Ws_g = Make_all_combination(xis_g, Ws_g)
+            print("\t\tTime for generating graph connections: " + str(time.time() - currtime))
             
-            
+            currtime = time.time()
             xis_g, Ws_g = validate_single(xis_g, list(Ws_g), [eta_t[j]], verbose)
             xis_g, Ws_g = validate_atoms(xis_g, Ws_g, eta_s, [eta_t[j]], verbose)
             xis_g, Ws_g = remove_unnecessary(xis_g, Ws_g, eta_t[j])
@@ -828,6 +833,7 @@ def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
                     for xi, w in zip(xis_g, Ws_g):
                         f.write(str(xi) + ': ' + str(w) + '\n')
             xis_g, Ws_g = lookupValidate(xis_g, Ws_g)
+            print("\t\tTime for generating graph validation: " + str(time.time() - currtime))
             
             
             
@@ -856,6 +862,7 @@ def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
 
     xis_grouped = [tuple(i) for i in xis_grouped]
     Ws_grouped = [tuple(i) for i in Ws_grouped]
+    currtime = time.time()
     xis, Ws = dedup_validated(xis_grouped, Ws_grouped)
     xis, Ws = group_up(xis, Ws)
     
@@ -866,10 +873,12 @@ def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
                 f.write(str(W) + '\n')
                 f.write('===========\n')
     xis, Ws = remove_fewer_cover(xis, Ws)
+    print("\t\tTime for generating final paths: " + str(time.time() - currtime))
     
     
-    
+    currtime = time.time()
     xis, Ws = Make_all_combination(xis, Ws)
+    print("\t\tTime for generating final graphs: " + str(time.time() - currtime))
     # xis, Ws = dedup_validated(xis, Ws) #??
     if(verbose):
         with open('final_edges_and_atoms.txt', 'w') as f:
