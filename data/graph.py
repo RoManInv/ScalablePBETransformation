@@ -1095,38 +1095,41 @@ def discover(Q, reversedQS, graph):
         ansDict = dict()
         for q in Q:
             transformation = ''
-            for Ws in graph.W:
+            for xis, Ws in zip(graph.xi, graph.W):
+                maxlen = max(xis, key = lambda x: x[0])
+                outputParts = [None] * maxlen
                 FirstProg = True
-                currval = ''
-                for atom in Ws:
+                # currval = ''
+                for xi, atom in zip(xis, Ws):
                     if(atom.id == 'ConstStr'):
-                        currval = atom.get_value()
+                        maxlen[xi[0]] = atom.get_value()
                     elif(atom.id == 'SubStr'):
                         if(FirstProg):
                             atom.String = q
-                            currval = atom.get_value()
+                            maxlen[xi[0]] = atom.get_value()
                             FirstProg = False
                         else:
-                            atom.String = currval
-                            currval = atom.get_value()
+                            atom.String = maxlen[xi[0]]
+                            maxlen[xi[0]] = atom.get_value()
                     elif(atom.id == 'Lookup'):
                         if(FirstProg):
                             atom.String = (q[atom.src[0]],)
                             atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
-                            currval = atom.get_value()
+                            maxlen[xi[0]] = atom.get_value()
                             FirstProg = False
                         else:
-                            atom.String = currval
+                            atom.String = maxlen[xi[0]]
                             atom.String = list()
                             for val in atom.src:
                                 if(val == -1):
-                                    atom.String.append(currval)
+                                    atom.String.append(maxlen[xi[0]])
                                 else:
                                     atom.String.append(q[val])
                             atom.String = tuple(atom.String)
                             atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
-                            currval = atom.get_value()
-                transformation += currval
+                            maxlen[xi[0]] = atom.get_value()
+                # transformation += currval
+                transformation = ''.join([i for i in outputParts if i is not None])
             if(tuple(q) not in ansDict.keys()):
                 ansDict[tuple(q)] = ''
             ansDict[tuple(q)] = transformation
@@ -1181,6 +1184,19 @@ class DAG():
         for xis, Ws in zip(self.xi, self.W):
             outputString += Ws[-1].get_value()
         return outputString
+
+    # def getMaxParts(self):
+    #     maxParts = -1
+    #     for xi in self.xi:
+    #         if(xi[0] > maxParts):
+    #             maxParts = xi[0]
+    #     return maxParts
+
+    # def Concatenate(self):
+    #     outputString = ""
+    #     maxlen = self.getMaxParts()
+    #     outputParts = [None] * maxlen
+    #     for xi, w in zip(self.xi, self.W):
 
 
     def get_input(self):
