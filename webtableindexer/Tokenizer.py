@@ -33,9 +33,11 @@ class Tokenizer(metaclass = SingletonMeta):
         stopwords = ['a','the','of','on','in','an','and','is','at','are','as','be','but','by','for','it','no','not','or',
                      'such','that','their','there','these','to','was','with','they','will',  'v', 've', 'd']#, 's']
         text = text.lower()
+        if(text in stopwords):
+            return None
         if(src is None):
             return text
         puncSet = self.__punc_ident__(src)
-        text = "".join([c for c in text if (c.isalnum() or c in puncSet or c == " ") and c not in stopwords])
+        text = "".join([c for c in text if (c.isalnum() or c in puncSet or c == " ")])
         return text
         

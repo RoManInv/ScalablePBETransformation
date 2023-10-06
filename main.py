@@ -118,7 +118,7 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     exampleList = list()
     xlist = list()
     for x, y in zip(XList, Y):
-        xlist.append([tokenizer.tokenize(xelem, y) for xelem in x])
+        xlist.append([tokenizer.tokenize(xelem, y) for xelem in x if xelem is not None])
     XList = xlist
     for x, y in zip(XList, Y):
         ans = Answer(x, y, isExample = True)
@@ -169,6 +169,7 @@ def testDB(path, mainfile, verbose = False):
     # Q = Qlist_sep
     # print(Q)
     # print(QTruth)
+    # print(XList)
 
     transformer = DirectTransformer(exampleList)
 
@@ -290,6 +291,22 @@ def testbatch_func(verbose = False):
             except:
                 print('This file cannot be read')
 
+def testbatch(verbose = False):
+    path = 'benchmarkcomplex'
+    # with open('exclude.txt', 'r') as f:
+    #     lines = f.readlines()
+    # lines = [line.strip() for line in lines]
+    for file in os.listdir(path):
+        print('Testing ' + str(file))
+        # if(str(file) in lines):
+        #     print('skipped')
+        #     continue
+        if(os.path.isfile(os.path.join(path, file))):
+            try:
+                testDB(path, file, verbose)
+            except:
+                print('This file cannot be read')
+
 def genComplexT(path, file, header):
     generator = complexTGenerator(3)
     generator.generate(path, file, header = header)
@@ -301,10 +318,13 @@ if(__name__ == '__main__'):
         f.write("==========\n")
     # testbatch_exp(True)
     # testbatch_func(True)
-    path = 'benchmarkForReport/experiment'
-    file = 'CountryToCapitalWithDifferentHeader.csv'
 
-    testDB(path, file, verbose = True)
+    testbatch(True)
+
+    # path = 'benchmarkcomplex'
+    # file = 'CountryYearToPresident.csv'
+
+    # testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
     # data = pd.read_csv(os.path.join(path, file))
     # for row in data.values:

@@ -1453,33 +1453,33 @@ def discover(Q, reversedQS, graph):
         for q in Q:
             transformation = ''
             for xis, Ws in zip(graph.xi, graph.W):
-                maxlen = max(xis, key = lambda x: x[0])
-                outputParts = [None] * maxlen
+                maxlen = max(xis, key = lambda x: x[0])[0]
+                outputParts = [None] * (maxlen + 1)
                 FirstProg = True
                 # currval = ''
                 for xi, atom in zip(xis, Ws):
                     if(atom.id == 'ConstStr'):
-                        maxlen[xi[0]] = atom.get_value()
+                        outputParts[xi[0]] = atom.get_value()
                     elif(atom.id == 'SubStr'):
                         if(FirstProg):
                             atom.String = q
-                            maxlen[xi[0]] = atom.get_value()
+                            outputParts[xi[0]] = atom.get_value()
                             FirstProg = False
                         else:
-                            atom.String = maxlen[xi[0]]
-                            maxlen[xi[0]] = atom.get_value()
+                            atom.String = outputParts[xi[0]]
+                            outputParts[xi[0]] = atom.get_value()
                     elif(atom.id == 'Lookup'):
                         if(FirstProg):
                             atom.String = (q[atom.src[0]],)
                             atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
-                            maxlen[xi[0]] = atom.get_value()
+                            outputParts[xi[0]] = atom.get_value()
                             FirstProg = False
                         else:
-                            atom.String = maxlen[xi[0]]
+                            atom.String = outputParts[xi[0]]
                             atom.String = list()
                             for val in atom.src:
                                 if(val == -1):
-                                    atom.String.append(maxlen[xi[0]])
+                                    atom.String.append(outputParts[xi[0]])
                                 else:
                                     atom.String.append(q[val])
                             atom.String = tuple(atom.String)
