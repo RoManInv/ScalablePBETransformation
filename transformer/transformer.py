@@ -157,8 +157,8 @@ class DirectTransformer:
             # for key, tableitem in reversedQS.items():
             #     reversedQS[key] = pd.DataFrame(tableitem)
 
-            if(len(tableList) > 2000 or len(reversedQS) > 3500):
-                return None, None
+            # if(len(tableList) > 2000 or len(reversedQS) > 3500):
+            #     return None, None
         else:
             res = None
             retrievedFlag = False
