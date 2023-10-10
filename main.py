@@ -319,12 +319,12 @@ if(__name__ == '__main__'):
     # testbatch_exp(True)
     # testbatch_func(True)
 
-    testbatch(True)
+    # testbatch(True)
 
-    # path = 'benchmarkcomplex'
-    # file = 'CountryYearToPresident.csv'
+    path = 'benchmarkcomplex'
+    file = 'CountryYearToPresident.csv'
 
-    # testDB(path, file, verbose = True)
+    testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
     # data = pd.read_csv(os.path.join(path, file))
     # for row in data.values:
