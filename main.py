@@ -120,8 +120,8 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     for x, y in zip(XList, Y):
         xlist.append([tokenizer.tokenize(xelem, y) for xelem in x if xelem is not None])
     XList = xlist
-    print(XList)
-    print(Y)
+    # print(XList)
+    # print(Y)
     for x, y in zip(XList, Y):
         ans = Answer(x, y, isExample = True)
         exampleList.append(ans)
@@ -189,6 +189,7 @@ def testDB(path, mainfile, verbose = False):
 
     # tableDict = dbUtil.reversedQuery_mt(tableList)
 
+    # print(XList, Y)
     currtime = time.time()
     graphs, reversedQS = transformer.transform_db(XList, Y, Q, query = 'Proteus')
     print("Time consumption for full transformation: " + str(time.time() - currtime))

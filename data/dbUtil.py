@@ -16,6 +16,12 @@ from webtableindexer.Tokenizer import Tokenizer
 from data.DBConn import PostgresDBConn, VerticaDBConn
 from utils.tokens import Makenode
 
+def dedup(seq, removeset = {' '}):
+    removeset = set(removeset)
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x) or x in removeset)]
+
 class QueryGenerator():
     def __init__(self, XList: Union[List, Tuple], Y: List, tau: int = 2) -> None:
         self.XList = XList
@@ -365,6 +371,7 @@ class ProteusQueryGenerator(QueryGenerator):
                 tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
                 XExtend = XExtend.union(tokSet)
             Xlist_t[i].extend(list(XExtend))
+        Xlist_t = [dedup(x, removeset = {' '}) for x in Xlist_t]
         print(Xlist_t)
         numcols = len(Xlist_t)
 
