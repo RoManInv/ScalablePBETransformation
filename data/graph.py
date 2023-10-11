@@ -1472,7 +1472,10 @@ def discover(Q, reversedQS, graph):
                             outputParts[xi[0]] = atom.get_value()
                     elif(atom.id == 'Lookup'):
                         if(FirstProg):
-                            atom.String = (q[atom.src[0]],)
+                            try:
+                                atom.String = (q[atom.src[0]],)
+                            except:
+                                print(atom.src)
                             atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
                             outputParts[xi[0]] = atom.get_value()
                             FirstProg = False
