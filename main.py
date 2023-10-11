@@ -120,6 +120,8 @@ def getExampleAndQuery(path, file, numExample = 5, qnum = 20):
     for x, y in zip(XList, Y):
         xlist.append([tokenizer.tokenize(xelem, y) for xelem in x if xelem is not None])
     XList = xlist
+    print(XList)
+    print(Y)
     for x, y in zip(XList, Y):
         ans = Answer(x, y, isExample = True)
         exampleList.append(ans)
@@ -197,6 +199,12 @@ def testDB(path, mainfile, verbose = False):
             f.write("===============\n")
         return
     # print(graphs[0])
+    if(not graphs):
+        print("No program found")
+        with open('report.txt', 'a') as f:
+            f.write("Failed to find any graphs\n")
+            f.write("===============\n")
+        return
     graphs = graphs[0]
     graphs = sorted(graphs, key = lambda x: x['support'], reverse = True)
 
