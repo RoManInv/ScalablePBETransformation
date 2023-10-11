@@ -188,6 +188,7 @@ class DirectTransformer:
         for answer in answerList:
             inputlist.append(answer.X)
             outputlist.append(answer.Y)
+        # print(inputlist, outputlist)
         try:
             gentime = time.time()
             graph = GENERATE_scalable(inputlist, outputlist, reversedQS, verbose = verbose)

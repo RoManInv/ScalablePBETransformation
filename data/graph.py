@@ -969,7 +969,9 @@ def GENERATE(_input, _output, reversedQS, noTableFlag = False, verbose = False):
             eta_s.extend(eta_s_temp)
         print(eta_s)
     # eta_s = prog.Makenode(str(_input), [])
-    eta_t = prog.Makenode(str(_output), [])
+    # eta_t = prog.Makenode(str(_output), [])
+    eta_t = [_output]
+    print(eta_t)
     eta = [eta_s, eta_t]
     try:
         if(verbose):

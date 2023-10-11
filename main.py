@@ -172,6 +172,7 @@ def testDB(path, mainfile, verbose = False):
     # print(Q)
     # print(QTruth)
     # print(XList)
+    # print(Y)
 
     transformer = DirectTransformer(exampleList)
 
@@ -331,7 +332,7 @@ if(__name__ == '__main__'):
     # testbatch(True)
 
     path = 'benchmarkcomplex'
-    file = 'CountryYearToPresident.csv'
+    file = 'AuthorDOBToLanguage.csv'
 
     testDB(path, file, verbose = True)
     # tokenizer = Tokenizer()
