@@ -1489,7 +1489,7 @@ def discover(Q, reversedQS, graph):
                                     atom.String.append(q[val])
                             atom.String = tuple(atom.String)
                             atom.row = __get_row_from_table__(reversedQS[atom.Table]['table'], atom.fromcol, atom.String)
-                            maxlen[xi[0]] = atom.get_value()
+                            outputParts[xi[0]] = atom.get_value()
                 # transformation += currval
                 transformation = ''.join([i for i in outputParts if i is not None])
             if(tuple(q) not in ansDict.keys()):
