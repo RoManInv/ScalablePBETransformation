@@ -398,7 +398,7 @@ class ProteusQueryGenerator(QueryGenerator):
                 XExtend = XExtend.union(set(explist))
             Xlist_t[i].extend(list(XExtend))
         Xlist_t = [dedup(x, removeset = {' '}) for x in Xlist_t]
-        # Xlist_t[0].extend(list(expset))
+        Xlist_t[0].extend(list(expset))
         print(Xlist_t)
         numcols = len(Xlist_t)
 
