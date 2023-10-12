@@ -231,13 +231,17 @@ class ProteusQueryGenerator(QueryGenerator):
 
     def __combination_gen__(self, txtlist) -> set:
         expset = set()
-        for i in range(2, len(txtlist)):
-            templist = combinations(txtlist, i)
-            for tok in templist:
-                if(tok not in expset):
-                    expset.add(tok)
+        for i, j in combinations(range(2, len(txtlist))):
+            if(abs(i - j) > 0):
+                expset.add(txtlist[i:j])
+        explist = [' '.join(i) for i in expset]
+        # for i in range(2, len(txtlist)):
+        #     templist = combinations(txtlist, i)
+        #     for tok in templist:
+        #         if(tok not in expset):
+        #             expset.add(tok)
 
-        return expset
+        return set(explist)
 
     def __colQueryStrGen__(self, qid: int, colList: list) -> str:
         __qString__ = """
