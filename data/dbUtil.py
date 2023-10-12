@@ -231,7 +231,7 @@ class ProteusQueryGenerator(QueryGenerator):
 
     def __combination_gen__(self, txtlist) -> set:
         expset = set()
-        for i, j in combinations(range(2, len(txtlist)), range(2, len(txtlist))):
+        for i, j in combinations([x for x in range(2, len(txtlist))], [y for y in range(2, len(txtlist))]):
             if(j - i > 1):
                 expset.add(txtlist[i:j])
         explist = [' '.join(i) for i in expset]
