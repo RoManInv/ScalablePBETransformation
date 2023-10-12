@@ -293,6 +293,7 @@ class ProteusQueryGenerator(QueryGenerator):
             tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
             YExtend = YExtend.union(tokSet)
         exptokset = self.__combination_gen__(YExtend)
+        exptokset = [' '.join(list(i)) for i in exptokset]
         YExtend = YExtend.union(exptokset)
         Y.extend(list(YExtend))
 
@@ -377,6 +378,7 @@ class ProteusQueryGenerator(QueryGenerator):
 
         for i in range(len(XList)):
             explist = list(self.__combination_gen__(XList[i]))
+            exptokset = [' '.join(list(i)) for i in exptokset]
             XList[i].extend(explist)
 
         Xlist_t = [list(col) for col in zip(*XList)]
