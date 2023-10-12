@@ -229,6 +229,16 @@ class ProteusQueryGenerator(QueryGenerator):
         # self.Y.extend(list(YExtend))
         # print(self.XList)
 
+    def __combination_gen__(self, txtlist) -> set:
+        expset = set()
+        for i in range(2, len(txtlist)):
+            templist = combinations(txtlist, i)
+            for tok in templist:
+                if(tok not in expset):
+                    expset.add(tok)
+
+        return expset
+
     def __colQueryStrGen__(self, qid: int, colList: list) -> str:
         __qString__ = """
                       (SELECT tableid, colid 
@@ -282,6 +292,8 @@ class ProteusQueryGenerator(QueryGenerator):
         for token in Y:
             tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
             YExtend = YExtend.union(tokSet)
+        exptokset = self.__combination_gen__(YExtend)
+        YExtend = YExtend.union(exptokset)
         Y.extend(list(YExtend))
 
         if(len(Y) == 0):
@@ -362,6 +374,10 @@ class ProteusQueryGenerator(QueryGenerator):
         XList = self.XList
         Y = self.Y
         tau = self.tau
+
+        for i in range(len(XList)):
+            explist = list(self.__combination_gen__(XList[i]))
+            XList[i].extend(explist)
 
         Xlist_t = [list(col) for col in zip(*XList)]
         
