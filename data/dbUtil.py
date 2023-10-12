@@ -378,7 +378,7 @@ class ProteusQueryGenerator(QueryGenerator):
 
         for i in range(len(XList)):
             explist = list(self.__combination_gen__(XList[i]))
-            exptokset = [' '.join(list(i)) for i in exptokset]
+            explist = [' '.join(list(i)) for i in explist]
             XList[i].extend(explist)
 
         Xlist_t = [list(col) for col in zip(*XList)]
