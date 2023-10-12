@@ -141,7 +141,7 @@ class DirectTransformer:
         tokenizer = Tokenizer()
         graphList = list()
         MAX_ITER = 10
-        dbUtil = DBUtil(dbConf = 'vertica')
+        dbUtil = DBUtil(dbConf = 'postgres')
 
         retrievedFlag = True
         currtime = time.time()
