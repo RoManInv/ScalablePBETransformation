@@ -376,12 +376,12 @@ class ProteusQueryGenerator(QueryGenerator):
         Y = self.Y
         tau = self.tau
 
-        expset = set()
-        for i in range(len(XList)):
-            explist = list(self.__combination_gen__(XList[i]))
-            explist = [' '.join(list(i)) for i in explist]
-            expset = expset.union(set(explist))
-        print(expset)
+        # expset = set()
+        # for i in range(len(XList)):
+        #     explist = list(self.__combination_gen__(XList[i]))
+        #     explist = [' '.join(list(i)) for i in explist]
+        #     expset = expset.union(set(explist))
+        # print(expset)
 
         Xlist_t = [list(col) for col in zip(*XList)]
         
@@ -389,10 +389,12 @@ class ProteusQueryGenerator(QueryGenerator):
             XExtend = set()
             for token in Xlist_t[i]:
                 tokSet = set(Makenode(token, [])) - set(string.punctuation) - {' '}
+                explist = list(self.__combination_gen__(list(tokSet)))
                 XExtend = XExtend.union(tokSet)
+                XExtend = XExtend.union(set(explist))
             Xlist_t[i].extend(list(XExtend))
         Xlist_t = [dedup(x, removeset = {' '}) for x in Xlist_t]
-        Xlist_t[0].extend(list(expset))
+        # Xlist_t[0].extend(list(expset))
         print(Xlist_t)
         numcols = len(Xlist_t)
 
